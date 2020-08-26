@@ -5,7 +5,6 @@ type UserInfo struct {
 	Name     string `db:"name"`
 	User     string `db:"user"`
 	Pwd      string `db:"pwd"`
-	Recycled string `db:"recycled"`
 }
 
 type Directory struct {
@@ -14,7 +13,6 @@ type Directory struct {
 	Fid      int64    `db:"fid"`
 	UserInfo UserInfo `db:"user_id"`
 	IsKey    int      `db:"is_key"`
-	Recycled string   `db:"recycled"`
 }
 
 type File struct {
@@ -23,18 +21,14 @@ type File struct {
 	Path       string `db:"path"`
 	Size       int64  `db:"size"`
 	IsComplete int    `db:"is_complete"`
-	Ctime      int    `db:"ctime"`
-	Utime      int    `db:"utime"`
-	Recycled   string `db:"recycled"`
 }
 
-type DirFile struct {
+type UserFile struct {
 	Id        int64     `db:"id"`
 	Name      string    `db:"name"`
 	File      File      `db:"file_id"`
 	Directory Directory `db:"dir_id"`
 	IsKey     int       `db:"is_key"`
-	Recycled  string    `db:"recycled"`
 }
 
 type Upload struct {
@@ -44,7 +38,6 @@ type Upload struct {
 	LocalPath  string   `db:"local_path"`
 	BlockSize  int      `db:"block_size"`
 	IsComplete int      `db:"is_complete"`
-	Recycled   string   `db:"recycled"`
 }
 
 type UploadBlock struct {
@@ -53,7 +46,6 @@ type UploadBlock struct {
 	Offset     int64  `db:"Offset"`
 	Size       int64  `db:"size"`
 	IsComplete int    `db:"is_complete"`
-	Recycled   string `db:"recycled"`
 }
 
 type Download struct {
@@ -63,7 +55,6 @@ type Download struct {
 	LocalPath  string   `db:"local_path"`
 	BlockSize  int      `db:"block_size"`
 	IsComplete int      `db:"is_complete"`
-	Recycled   string   `db:"recycled"`
 }
 
 type DownloadBlock struct {
@@ -72,5 +63,4 @@ type DownloadBlock struct {
 	Offset     int64  `db:"Offset"`
 	Size       int64  `db:"size"`
 	IsComplete int    `db:"is_complete"`
-	Recycled   string `db:"recycled"`
 }

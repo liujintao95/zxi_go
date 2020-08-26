@@ -10,21 +10,20 @@ type FileManager struct {
 }
 
 func NewFileManager() *FileManager {
-	return &FileManager{table: "user_info"}
+	return &FileManager{table: "file"}
 }
 
 func (f *FileManager) GetById(id int) (models.File, error) {
 	fileMate := new(models.File)
 	sql := `
-		SELECT id, hash, path, size, is_complete, utime, ctime
+		SELECT id, hash, path, size, is_complete
 		FROM file
 		WHERE recycled = 'N'
 		AND id = ?
 	`
-	rows := utils.Conn.QueryRow(sql, id)
-	err := rows.Scan(
-		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size,
-		fileMate.IsComplete, fileMate.Utime, fileMate.Utime,
+	row := utils.Conn.QueryRow(sql, id)
+	err := row.Scan(
+		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size, fileMate.IsComplete,
 	)
 	return *fileMate, err
 }
@@ -32,15 +31,14 @@ func (f *FileManager) GetById(id int) (models.File, error) {
 func (f *FileManager) GetByHash(hash string) (models.File, error) {
 	fileMate := new(models.File)
 	sql := `
-		SELECT id, hash, path, size, is_complete, utime, ctime
+		SELECT id, hash, path, size, is_complete
 		FROM file
 		WHERE recycled = 'N'
 		AND hash = ?
 	`
-	rows := utils.Conn.QueryRow(sql, hash)
-	err := rows.Scan(
-		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size,
-		fileMate.IsComplete, fileMate.Utime, fileMate.Utime,
+	row := utils.Conn.QueryRow(sql, hash)
+	err := row.Scan(
+		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size, fileMate.IsComplete,
 	)
 	return *fileMate, err
 }
@@ -67,13 +65,22 @@ func (f *FileManager) Update(fileMate models.File) error {
 	sql := `
 		UPDATE file 
 		SET path = ?, size = ?, is_complete = ?
-		WHERE hash = ?
+		WHERE id = ?
 	`
 	_, err := utils.Conn.Exec(
 		sql,
-		fileMate.Path, fileMate.Size,
-		fileMate.IsComplete, fileMate.Hash,
+		fileMate.Path, fileMate.Size, fileMate.IsComplete, fileMate.Id,
 	)
+	return err
+}
+
+func (f *FileManager) UpdateComplete(complete int, id int) error {
+	sql := `
+		UPDATE file 
+		SET path = ?, size = ?, is_complete = ?
+		WHERE hash = ?
+	`
+	_, err := utils.Conn.Exec(sql, complete, id)
 	return err
 }
 
@@ -87,3 +94,12 @@ func (f *FileManager) DelByHash(hash string) error {
 	return err
 }
 
+func (f *FileManager) DelById(id int) error {
+	sql := `
+		UPDATE file 
+		SET recycled = 'Y'
+		WHERE id = ?
+	`
+	_, err := utils.Conn.Exec(sql, id)
+	return err
+}
