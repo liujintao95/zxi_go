@@ -1,16 +1,16 @@
-package network_disk
+package zxi
 
 import (
 	"github.com/gin-gonic/gin"
-	"zxi_network_disk_go/network_disk/api"
+	"zxi_network_disk_go/zxi/api"
 )
 
 func UrlMap(router *gin.Engine) {
-	router.GET("/sign", api.Sign)
 	//router.POST("/register", api.Register)
 	//router.GET("/logout", api.Logout)
 	//
-	//authorized := router.Group("/auth", LoginRequired)
+	authorized := router.Group("/zxi/auth", LoginRequired)
+	authorized.POST("/file/save", api.SaveFileInfo)
 	//authorized.GET("/user/show", api.ShowUser)
 	//authorized.POST("/user/change/password", api.PasswordChange)
 	//authorized.POST("/user/change/username", api.UsernameChange)

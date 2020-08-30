@@ -1,16 +1,16 @@
 package models
 
 type UserInfo struct {
-	Id       int64  `db:"id"`
-	Name     string `db:"name"`
-	User     string `db:"user"`
-	Pwd      string `db:"pwd"`
+	Id   int64  `db:"id"`
+	Name string `db:"name"`
+	User string `db:"user"`
+	Pwd  string `db:"pwd"`
 }
 
 type Directory struct {
 	Id       int64    `db:"id"`
 	Name     string   `db:"name"`
-	Fid      int64    `db:"fid"`
+	Path     string   `db:"path"`
 	UserInfo UserInfo `db:"user_id"`
 	IsKey    int      `db:"is_key"`
 }

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/network_disk/models"
 	"zxi_network_disk_go/utils"
+	"zxi_network_disk_go/zxi/models"
 )
 
 type UserManager struct {
@@ -16,15 +16,15 @@ func NewUserManager() *UserManager {
 func (u *UserManager) GetSqlByUser(user string) (models.UserInfo, error) {
 	userMate := new(models.UserInfo)
 	sql := `
-		SELECT id, name, user, pwd, recycled
+		SELECT id, name, user, pwd
 		FROM user_info 
 		WHERE user = ?
 		AND recycled = 'N'
 	`
 	rows := utils.Conn.QueryRow(sql, user)
 	err := rows.Scan(
-		userMate.Id, userMate.Name, userMate.User,
-		userMate.Pwd, userMate.Recycled,
+		&userMate.Id, &userMate.Name, &userMate.User,
+		&userMate.Pwd, &userMate,
 	)
 	return *userMate, err
 }

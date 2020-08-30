@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/network_disk/models"
 	"zxi_network_disk_go/utils"
+	"zxi_network_disk_go/zxi/models"
 )
 
 type UserFileManager struct {
@@ -16,7 +16,7 @@ func NewUserFileManager() *UserFileManager {
 func (f *UserFileManager) GetRootByUserId(userId int) ([]models.UserFile, error) {
 	var userFileList []models.UserFile
 	sql := `
-		SELECT d.id AS dir_id, d.name AS dir_name, d.fid, d.is_key AS dir_key,
+		SELECT d.id AS dir_id, d.name AS dir_name, d.is_key AS dir_key,
 		uf.id AS map_id, uf.name AS file_name, uf.is_key AS file_key,
 		f.id AS file_id, f.hash, f.size, f.path
 		FROM user_file AS uf
@@ -38,9 +38,9 @@ func (f *UserFileManager) GetRootByUserId(userId int) ([]models.UserFile, error)
 	for rows.Next() {
 		userFileMate := new(models.UserFile)
 		_ = rows.Scan(
-			userFileMate.Directory.Id, userFileMate.Directory.Name, userFileMate.Directory.Fid,
-			userFileMate.Directory.IsKey, userFileMate.Id, userFileMate.Name, userFileMate.IsKey,
-			userFileMate.File.Id, userFileMate.File.Hash, userFileMate.File.Size, userFileMate.File.Path,
+			userFileMate.Directory.Id, userFileMate.Directory.Name, userFileMate.Directory.IsKey,
+			userFileMate.Id, userFileMate.Name, userFileMate.IsKey, userFileMate.File.Id,
+			userFileMate.File.Hash, userFileMate.File.Size, userFileMate.File.Path,
 		)
 		userFileList = append(userFileList, *userFileMate)
 	}
@@ -50,7 +50,7 @@ func (f *UserFileManager) GetRootByUserId(userId int) ([]models.UserFile, error)
 func (f *UserFileManager) GetListByDirId(dirId int) ([]models.UserFile, error) {
 	var userFileList []models.UserFile
 	sql := `
-		SELECT d.id AS dir_id, d.name AS dir_name, d.fid, d.is_key AS dir_key,
+		SELECT d.id AS dir_id, d.name AS dir_name, d.is_key AS dir_key,
 		uf.id AS map_id, uf.name AS file_name, uf.is_key AS file_key,
 		f.id AS file_id, f.hash, f.size, f.path
 		FROM user_file AS uf
@@ -71,9 +71,9 @@ func (f *UserFileManager) GetListByDirId(dirId int) ([]models.UserFile, error) {
 	for rows.Next() {
 		userFileMate := new(models.UserFile)
 		_ = rows.Scan(
-			userFileMate.Directory.Id, userFileMate.Directory.Name, userFileMate.Directory.Fid,
-			userFileMate.Directory.IsKey, userFileMate.Id, userFileMate.Name, userFileMate.IsKey,
-			userFileMate.File.Id, userFileMate.File.Hash, userFileMate.File.Size, userFileMate.File.Path,
+			&userFileMate.Directory.Id, &userFileMate.Directory.Name, &userFileMate.Directory.IsKey,
+			&userFileMate.Id, &userFileMate.Name, &userFileMate.IsKey, &userFileMate.File.Id,
+			&userFileMate.File.Hash, &userFileMate.File.Size, &userFileMate.File.Path,
 		)
 		userFileList = append(userFileList, *userFileMate)
 	}

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/network_disk/models"
 	"zxi_network_disk_go/utils"
+	"zxi_network_disk_go/zxi/models"
 )
 
 type FileManager struct {
@@ -23,7 +23,7 @@ func (f *FileManager) GetById(id int) (models.File, error) {
 	`
 	row := utils.Conn.QueryRow(sql, id)
 	err := row.Scan(
-		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size, fileMate.IsComplete,
+		&fileMate.Id, &fileMate.Hash, &fileMate.Path, &fileMate.Size, &fileMate.IsComplete,
 	)
 	return *fileMate, err
 }
@@ -38,7 +38,7 @@ func (f *FileManager) GetByHash(hash string) (models.File, error) {
 	`
 	row := utils.Conn.QueryRow(sql, hash)
 	err := row.Scan(
-		fileMate.Id, fileMate.Hash, fileMate.Path, fileMate.Size, fileMate.IsComplete,
+		&fileMate.Id, &fileMate.Hash, &fileMate.Path, &fileMate.Size, &fileMate.IsComplete,
 	)
 	return *fileMate, err
 }

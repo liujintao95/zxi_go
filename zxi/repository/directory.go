@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/network_disk/models"
 	"zxi_network_disk_go/utils"
+	"zxi_network_disk_go/zxi/models"
 )
 
 type DirectoryManager struct {
@@ -13,10 +13,26 @@ func NewDirectoryManager() *DirectoryManager {
 	return &DirectoryManager{table: "directory"}
 }
 
-func (d *DirectoryManager) GetRootByUserId(userId int) (models.Directory, error) {
+func (d *DirectoryManager) GetByUserIdPath(userId int64, path string) (models.Directory, error) {
 	dirMate := new(models.Directory)
 	sql := `
-		SELECT id, name, fid, is_key
+		SELECT id, name, path, is_key
+		FROM directory
+		WHERE recycled = 'N'
+		AND user_id = ?
+		AND path = ?
+	`
+	row := utils.Conn.QueryRow(sql, userId, path)
+	err := row.Scan(
+		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
+	)
+	return *dirMate, err
+}
+
+func (d *DirectoryManager) GetRootByUserId(userId int64) (models.Directory, error) {
+	dirMate := new(models.Directory)
+	sql := `
+		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
 		AND fid = -1
@@ -24,30 +40,30 @@ func (d *DirectoryManager) GetRootByUserId(userId int) (models.Directory, error)
 	`
 	row := utils.Conn.QueryRow(sql, userId)
 	err := row.Scan(
-		dirMate.Id, dirMate.Name, dirMate.Fid, dirMate.IsKey,
+		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)
 	return *dirMate, err
 }
 
-func (d *DirectoryManager) GetByDirId(id int) (models.Directory, error) {
+func (d *DirectoryManager) GetByDirId(id int64) (models.Directory, error) {
 	dirMate := new(models.Directory)
 	sql := `
-		SELECT id, name, fid, is_key
+		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
 		AND fid = ?
 	`
 	row := utils.Conn.QueryRow(sql, id)
 	err := row.Scan(
-		dirMate.Id, dirMate.Name, dirMate.Fid, dirMate.IsKey,
+		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)
 	return *dirMate, err
 }
 
-func (d *DirectoryManager) GetListByFId(FId int) ([]models.Directory, error) {
+func (d *DirectoryManager) GetListByFId(FId int64) ([]models.Directory, error) {
 	var dirList []models.Directory
 	sql := `
-		SELECT id, name, fid, is_key
+		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
 		AND fid = ?
@@ -59,7 +75,7 @@ func (d *DirectoryManager) GetListByFId(FId int) ([]models.Directory, error) {
 	for rows.Next() {
 		dirMate := new(models.Directory)
 		_ = rows.Scan(
-			dirMate.Id, dirMate.Name, dirMate.Fid, dirMate.IsKey,
+			&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 		)
 		dirList = append(dirList, *dirMate)
 	}
@@ -69,13 +85,13 @@ func (d *DirectoryManager) GetListByFId(FId int) ([]models.Directory, error) {
 func (d *DirectoryManager) Create(dirMate models.Directory) (int64, error) {
 	sql := `
 		INSERT INTO directory(
-			name, fid, is_key, user_id
+			name, path, is_key, user_id
 		)
 		VALUES(?, ?, ?, ?)
 	`
 	res, err := utils.Conn.Exec(
 		sql,
-		dirMate.Name, dirMate.Fid, dirMate.IsKey, dirMate.UserInfo.Id,
+		dirMate.Name, dirMate.Path, dirMate.IsKey, dirMate.UserInfo.Id,
 	)
 	if err != nil {
 		return -1, err
@@ -87,17 +103,17 @@ func (d *DirectoryManager) Create(dirMate models.Directory) (int64, error) {
 func (d *DirectoryManager) Update(dirMate models.Directory) error {
 	sql := `
 		UPDATE directory 
-		SET name = ?, fid = ?, is_key = ?
+		SET name = ?, path = ?, is_key = ?
 		WHERE id = ?
 	`
 	_, err := utils.Conn.Exec(
 		sql,
-		dirMate.Name, dirMate.Fid, dirMate.IsKey, dirMate.Id,
+		dirMate.Name, dirMate.Path, dirMate.IsKey, dirMate.Id,
 	)
 	return err
 }
 
-func (d *DirectoryManager) UpdateName(name string, id int) error {
+func (d *DirectoryManager) UpdateName(name string, id int64) error {
 	sql := `
 		UPDATE directory 
 		SET name = ?
@@ -107,7 +123,7 @@ func (d *DirectoryManager) UpdateName(name string, id int) error {
 	return err
 }
 
-func (d *DirectoryManager) UpdateKey(key int, id int) error {
+func (d *DirectoryManager) UpdateKey(key int64, id int64) error {
 	sql := `
 		UPDATE directory 
 		SET is_key = ?
@@ -117,7 +133,7 @@ func (d *DirectoryManager) UpdateKey(key int, id int) error {
 	return err
 }
 
-func (d *DirectoryManager) UpdateFId(FId int, id int) error {
+func (d *DirectoryManager) UpdateFId(FId int64, id int64) error {
 	sql := `
 		UPDATE directory 
 		SET fid = ?
@@ -127,7 +143,7 @@ func (d *DirectoryManager) UpdateFId(FId int, id int) error {
 	return err
 }
 
-func (d *DirectoryManager) DelById(id int) error {
+func (d *DirectoryManager) DelById(id int64) error {
 	sql := `
 		UPDATE directory 
 		SET recycled = 'Y'
