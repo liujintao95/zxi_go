@@ -9,3 +9,4 @@ var errCheck = utils.ErrCheck
 var fileManager = repository.NewFileManager()
 var userFileManager = repository.NewUserFileManager()
 var directoryManager = repository.NewDirectoryManager()
+var uploadManager = repository.NewUploadManager()

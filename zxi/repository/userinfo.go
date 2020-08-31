@@ -13,7 +13,7 @@ func NewUserManager() *UserManager {
 	return &UserManager{table: "user_info"}
 }
 
-func (u *UserManager) GetSqlByUser(user string) (models.UserInfo, error) {
+func (u *UserManager) GetByUser(user string) (models.UserInfo, error) {
 	userMate := new(models.UserInfo)
 	sql := `
 		SELECT id, name, user, pwd

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"path/filepath"
 	"strings"
+	"zxi_network_disk_go/conf"
 	"zxi_network_disk_go/zxi/handler"
 	"zxi_network_disk_go/zxi/models"
 	"zxi_network_disk_go/zxi/parser"
@@ -16,8 +18,6 @@ func SaveFileInfo(g *gin.Context) {
 	userInter, _ := g.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 	prefix, _ := handler.PathSplit(rootPath)
-
-	var uploadPath []string
 
 	for _, fileJson := range filesJsonList {
 		// json数据反序列化
@@ -31,7 +31,7 @@ func SaveFileInfo(g *gin.Context) {
 		dirPath, dirName := handler.PathSplit(filePath)
 		for {
 			dirPath, dirName = handler.PathSplit(dirPath)
-			dirMate, err := directoryManager.GetByUserIdPath(userMate.Id, dirPath)
+			dirMate, err := directoryManager.GetByUserIdPathName(userMate.Id, dirPath, dirName)
 			errCheck(g, err, "数据库查询错误", http.StatusInternalServerError)
 
 			if dirMate.Id == 0 {
@@ -56,21 +56,29 @@ func SaveFileInfo(g *gin.Context) {
 		}
 
 		// 保存文件信息以及处理需要上传的文件
-		fileMate, err := fileManager.GetByHash(postFile.Hash)
-		errCheck(g, err, "数据库查询错误", http.StatusInternalServerError)
+		fileMate, _ := fileManager.GetByHash(postFile.Hash)
 		var fileId int64
 		if fileMate.Id != 0 {
-			// 如果有相关文件数据则触发秒传
 			fileId = fileMate.Id
 		} else {
-			// 如果没有相关文件数据则需要上传
-			uploadPath = append(uploadPath, postFile.Path)
-			// 创建上传任务
 			fileId, err = fileManager.Create(models.File{
 				Hash: postFile.Hash,
-				Path: postFile.Path,
+				Path: filepath.Join(conf.SAVE_PATH, postFile.Hash),
 				Size: postFile.Size,
 			})
+			errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
+		}
+		if fileMate.IsComplete != 1{
+			// 网盘上没有该文件，需要上传
+			uploadMate, _ := uploadManager.GetByUserIdFileId(userMate.Id, fileId)
+			if uploadMate.Id == 0 {
+				_, err = uploadManager.Create(models.Upload{
+					File: models.File{Id: fileId},
+					UserInfo: models.UserInfo{Id: userMate.Id},
+					BlockSize: conf.BLOCK_SIZE,
+					LocalPath: postFile.Path,
+				})
+			}
 		}
 		_, err = userFileManager.Create(models.UserFile{
 			Name:      postFile.Name,

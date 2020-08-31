@@ -13,7 +13,7 @@ func NewDirectoryManager() *DirectoryManager {
 	return &DirectoryManager{table: "directory"}
 }
 
-func (d *DirectoryManager) GetByUserIdPath(userId int64, path string) (models.Directory, error) {
+func (d *DirectoryManager) GetByUserIdPathName(userId int64, path string, name string) (models.Directory, error) {
 	dirMate := new(models.Directory)
 	sql := `
 		SELECT id, name, path, is_key
@@ -21,8 +21,9 @@ func (d *DirectoryManager) GetByUserIdPath(userId int64, path string) (models.Di
 		WHERE recycled = 'N'
 		AND user_id = ?
 		AND path = ?
+		AND name = ?
 	`
-	row := utils.Conn.QueryRow(sql, userId, path)
+	row := utils.Conn.QueryRow(sql, userId, path, name)
 	err := row.Scan(
 		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)

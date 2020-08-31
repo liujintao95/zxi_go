@@ -13,7 +13,7 @@ func NewFileManager() *FileManager {
 	return &FileManager{table: "file"}
 }
 
-func (f *FileManager) GetById(id int) (models.File, error) {
+func (f *FileManager) GetById(id int64) (models.File, error) {
 	fileMate := new(models.File)
 	sql := `
 		SELECT id, hash, path, size, is_complete
@@ -74,11 +74,11 @@ func (f *FileManager) Update(fileMate models.File) error {
 	return err
 }
 
-func (f *FileManager) UpdateComplete(complete int, id int) error {
+func (f *FileManager) UpdateComplete(complete int, id int64) error {
 	sql := `
 		UPDATE file 
-		SET path = ?, size = ?, is_complete = ?
-		WHERE hash = ?
+		SET is_complete = ?
+		WHERE id = ?
 	`
 	_, err := utils.Conn.Exec(sql, complete, id)
 	return err
@@ -94,7 +94,7 @@ func (f *FileManager) DelByHash(hash string) error {
 	return err
 }
 
-func (f *FileManager) DelById(id int) error {
+func (f *FileManager) DelById(id int64) error {
 	sql := `
 		UPDATE file 
 		SET recycled = 'Y'
