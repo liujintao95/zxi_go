@@ -10,7 +10,9 @@ func UrlMap(router *gin.Engine) {
 	//router.GET("/logout", api.Logout)
 	//
 	authorized := router.Group("/zxi/auth", LoginRequired)
-	authorized.POST("/file/save", api.SaveFileInfo)
+	authorized.POST("/file/uploadfiles", api.UploadFiles)
+	authorized.POST("/file/uploadfile", api.UploadFile)
+	authorized.GET("/file/show", api.ShowFiles)
 	//authorized.GET("/user/show", api.ShowUser)
 	//authorized.POST("/user/change/password", api.PasswordChange)
 	//authorized.POST("/user/change/username", api.UsernameChange)

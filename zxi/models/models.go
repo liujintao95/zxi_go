@@ -28,6 +28,7 @@ type UserFile struct {
 	Name      string    `db:"name"`
 	File      File      `db:"file_id"`
 	Directory Directory `db:"dir_id"`
+	UserInfo  UserInfo  `db:"user_id"`
 	IsKey     int       `db:"is_key"`
 }
 

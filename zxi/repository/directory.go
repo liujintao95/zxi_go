@@ -30,20 +30,27 @@ func (d *DirectoryManager) GetByUserIdPathName(userId int64, path string, name s
 	return *dirMate, err
 }
 
-func (d *DirectoryManager) GetRootByUserId(userId int64) (models.Directory, error) {
-	dirMate := new(models.Directory)
+func (d *DirectoryManager) GetRootByUserId(userId int64) ([]models.Directory, error) {
+	var dirList []models.Directory
 	sql := `
 		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
-		AND fid = -1
+		AND path = '\\'
 		AND user_id = ?
 	`
-	row := utils.Conn.QueryRow(sql, userId)
-	err := row.Scan(
-		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
-	)
-	return *dirMate, err
+	rows, err := utils.Conn.Query(sql, userId)
+	if err != nil {
+		return dirList, err
+	}
+	for rows.Next() {
+		dirMate := new(models.Directory)
+		_ = rows.Scan(
+			&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
+		)
+		dirList = append(dirList, *dirMate)
+	}
+	return dirList, err
 }
 
 func (d *DirectoryManager) GetByDirId(id int64) (models.Directory, error) {
@@ -52,7 +59,7 @@ func (d *DirectoryManager) GetByDirId(id int64) (models.Directory, error) {
 		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
-		AND fid = ?
+		AND id = ?
 	`
 	row := utils.Conn.QueryRow(sql, id)
 	err := row.Scan(
@@ -61,15 +68,16 @@ func (d *DirectoryManager) GetByDirId(id int64) (models.Directory, error) {
 	return *dirMate, err
 }
 
-func (d *DirectoryManager) GetListByFId(FId int64) ([]models.Directory, error) {
+func (d *DirectoryManager) GetListByUserIdPath(userId int64, path string) ([]models.Directory, error) {
 	var dirList []models.Directory
 	sql := `
 		SELECT id, name, path, is_key
 		FROM directory
 		WHERE recycled = 'N'
-		AND fid = ?
+		AND user_id = ?
+		AND path = ?
 	`
-	rows, err := utils.Conn.Query(sql, FId)
+	rows, err := utils.Conn.Query(sql, userId, path)
 	if err != nil {
 		return dirList, err
 	}

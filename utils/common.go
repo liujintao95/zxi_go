@@ -12,7 +12,6 @@ func ErrCheck(g *gin.Context, err error, msg string, httpCode int) {
 		if httpCode != 0 {
 			g.JSON(httpCode, gin.H{
 				"errmsg": msg,
-				"data":   nil,
 			})
 			panic(msg + ":" + err.Error())
 		}

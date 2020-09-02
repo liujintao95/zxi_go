@@ -5,14 +5,63 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"zxi_network_disk_go/conf"
+	"zxi_network_disk_go/zxi/field"
 	"zxi_network_disk_go/zxi/handler"
 	"zxi_network_disk_go/zxi/models"
 	"zxi_network_disk_go/zxi/parser"
 )
 
-func SaveFileInfo(g *gin.Context) {
+func UploadFile(g *gin.Context) {
+	fileJson := g.PostForm("file_json")
+	userInter, _ := g.Get("userInfo")
+	userMate := userInter.(models.UserInfo)
+
+	// json数据反序列化
+	postFile := new(parser.PostFileInfo)
+	err := json.Unmarshal([]byte(fileJson), postFile)
+	errCheck(g, err, "文件属性解析错误", http.StatusInternalServerError)
+
+	fileMate, _ := fileManager.GetByHash(postFile.Hash)
+	var fileId int64
+	if fileMate.Id != 0 {
+		fileId = fileMate.Id
+	} else {
+		fileId, err = fileManager.Create(models.File{
+			Hash: postFile.Hash,
+			Path: filepath.Join(conf.SAVE_PATH, postFile.Hash),
+			Size: postFile.Size,
+		})
+		errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
+	}
+	if fileMate.IsComplete != 1 {
+		// 网盘上没有该文件，需要上传
+		uploadMate, _ := uploadManager.GetByUserIdFileId(userMate.Id, fileId)
+		if uploadMate.Id == 0 {
+			_, err = uploadManager.Create(models.Upload{
+				File:      models.File{Id: fileId},
+				UserInfo:  models.UserInfo{Id: userMate.Id},
+				BlockSize: conf.BLOCK_SIZE,
+				LocalPath: postFile.Path,
+			})
+		}
+	}
+	_, err = userFileManager.Create(models.UserFile{
+		Name:     postFile.Name,
+		File:     models.File{Id: fileId},
+		UserInfo: models.UserInfo{Id: userMate.Id},
+	})
+	errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
+
+	g.JSON(http.StatusOK, gin.H{
+		"errmsg": "ok",
+		"data":   "",
+	})
+}
+
+func UploadFiles(g *gin.Context) {
 	filesJsonList := g.PostFormArray("files_json")
 	rootPath := g.PostForm("root")
 	userInter, _ := g.Get("userInfo")
@@ -41,15 +90,14 @@ func SaveFileInfo(g *gin.Context) {
 					UserInfo: userMate,
 				})
 				errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
-				if dirId == 0{
+				if dirId == 0 {
 					dirId = lastId
 				}
 			} else {
-				if dirId == 0{
+				if dirId == 0 {
 					dirId = dirMate.Id
 				}
 			}
-
 			if dirPath == `\` {
 				break //跳出循环
 			}
@@ -68,13 +116,13 @@ func SaveFileInfo(g *gin.Context) {
 			})
 			errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
 		}
-		if fileMate.IsComplete != 1{
+		if fileMate.IsComplete != 1 {
 			// 网盘上没有该文件，需要上传
 			uploadMate, _ := uploadManager.GetByUserIdFileId(userMate.Id, fileId)
 			if uploadMate.Id == 0 {
 				_, err = uploadManager.Create(models.Upload{
-					File: models.File{Id: fileId},
-					UserInfo: models.UserInfo{Id: userMate.Id},
+					File:      models.File{Id: fileId},
+					UserInfo:  models.UserInfo{Id: userMate.Id},
 					BlockSize: conf.BLOCK_SIZE,
 					LocalPath: postFile.Path,
 				})
@@ -84,12 +132,40 @@ func SaveFileInfo(g *gin.Context) {
 			Name:      postFile.Name,
 			File:      models.File{Id: fileId},
 			Directory: models.Directory{Id: dirId},
+			UserInfo:  models.UserInfo{Id: userMate.Id},
 		})
 		errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
 	}
 
-	g.JSON(http.StatusOK, gin.H{
-		"errmsg": "ok",
-		"data":   "",
+	g.JSON(http.StatusOK, field.ErrField{
+		Error: "ok",
+	})
+}
+
+func ShowFiles(g *gin.Context) {
+	path := g.Query("path")
+	sDirId := g.Query("dir_id")
+	dirId, err := strconv.ParseInt(sDirId, 10, 64)
+	errCheck(g, err, "目录标识符格式错误", http.StatusInternalServerError)
+	userInter, _ := g.Get("userInfo")
+	userMate := userInter.(models.UserInfo)
+
+	var dirList []models.Directory
+	var fileList []models.UserFile
+
+	if path == "" {
+		dirList, err = directoryManager.GetRootByUserId(userMate.Id)
+		fileList ,err = userFileManager.GetRootByUserId(userMate.Id)
+
+		errCheck(g, err, "数据库读取错误", http.StatusInternalServerError)
+	} else {
+		dirList, err = directoryManager.GetListByUserIdPath(userMate.Id, path)
+		fileList ,err = userFileManager.GetListByDirId(dirId)
+	}
+
+	g.JSON(http.StatusOK, field.ShowFilesField{
+		Error: "ok",
+		DirList: dirList,
+		FileList: fileList,
 	})
 }
