@@ -1,23 +1,22 @@
-package utils
+package core
 
 import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"os"
-	"zxi_network_disk_go/conf"
 )
 
 var Conn *sql.DB
 
 func MySqlInit() {
 	dsn := fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
-		conf.MySqlConf["user"],
-		conf.MySqlConf["pwd"],
-		conf.MySqlConf["type"],
-		conf.MySqlConf["address"],
-		conf.MySqlConf["port"],
-		conf.MySqlConf["database"],
+		MySqlConf["user"],
+		MySqlConf["pwd"],
+		MySqlConf["type"],
+		MySqlConf["address"],
+		MySqlConf["port"],
+		MySqlConf["database"],
 	)
 	Conn, _ = sql.Open("mysql", dsn)
 	Conn.SetMaxOpenConns(50)

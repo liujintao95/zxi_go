@@ -2,7 +2,7 @@ package zxi
 
 import (
 	"github.com/gin-gonic/gin"
-	"zxi_network_disk_go/zxi/models"
+	"zxi_go/zxi/models"
 )
 
 func LoginRequired(g *gin.Context) {

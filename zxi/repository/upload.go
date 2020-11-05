@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/models"
+    "zxi_go/core"
+    "zxi_go/zxi/models"
 )
 
 type UploadManager struct {
@@ -27,7 +27,7 @@ func (u *UploadManager) GetByUserIdFileId(userId int64, fileId int64) (models.Up
 		AND up.user_id = ?
 		AND up.file_id = ?
 	`
-	rows := utils.Conn.QueryRow(sql, userId, fileId)
+	rows := core.Conn.QueryRow(sql, userId, fileId)
 	err := rows.Scan(
 		&uploadMate.Id, &uploadMate.UserInfo.Name, &uploadMate.UserInfo.User,
 		&uploadMate.File.Hash, &uploadMate.File.Size, &uploadMate.File.Path,
@@ -50,7 +50,7 @@ func (u *UploadManager) GetById(id int64) (models.Upload, error) {
 		WHERE up.recycled = 'N'
 		AND up.id = ?
 	`
-	rows := utils.Conn.QueryRow(sql, id)
+	rows := core.Conn.QueryRow(sql, id)
 	err := rows.Scan(
 		&uploadMate.Id, &uploadMate.UserInfo.Name, &uploadMate.UserInfo.User,
 		&uploadMate.File.Hash, &uploadMate.File.Size, &uploadMate.File.Path,
@@ -73,7 +73,7 @@ func (u *UploadManager) GetListByUserId(userId int64) ([]models.Upload, error) {
 		WHERE up.recycled = 'N'
 		AND up.user_id = ?
 	`
-	rows, err := utils.Conn.Query(sql, userId)
+	rows, err := core.Conn.Query(sql, userId)
 	if err != nil {
 		return uploadList, err
 	}
@@ -97,7 +97,7 @@ func (u *UploadManager) Create(uploadMate models.Upload) (int64, error) {
 		)
 		VALUES(?, ?, ?, ?, ?)
 	`
-	res, err := utils.Conn.Exec(
+	res, err := core.Conn.Exec(
 		sql,
 		uploadMate.File.Id, uploadMate.UserInfo.Id, uploadMate.LocalPath,
 		uploadMate.BlockSize, uploadMate.IsComplete,
@@ -115,7 +115,7 @@ func (u *UploadManager) Update(uploadMate models.Upload) error {
 		SET local_path = ?, block_size = ?, is_complete = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(
+	_, err := core.Conn.Exec(
 		sql,
 		uploadMate.LocalPath, uploadMate.BlockSize, uploadMate.IsComplete,
 		uploadMate.Id,
@@ -129,7 +129,7 @@ func (u *UploadManager) UpdateComplete(complete int, id int64) error {
 		SET is_complete = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, complete, id)
+	_, err := core.Conn.Exec(sql, complete, id)
 	return err
 }
 
@@ -139,6 +139,6 @@ func (u *UploadManager) DeleteById(id int64) error {
 		SET recycled = 'Y'
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, id)
+	_, err := core.Conn.Exec(sql, id)
 	return err
 }

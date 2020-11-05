@@ -1,7 +1,7 @@
-package utils
+package core
 
 import (
-	"github.com/sirupsen/logrus"
+    "github.com/sirupsen/logrus"
 	"os"
 )
 

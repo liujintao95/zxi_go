@@ -1,6 +1,6 @@
 package field
 
-import "zxi_network_disk_go/zxi/models"
+import "zxi_go/zxi/models"
 
 type ErrField struct {
 	Error string `json:"err"`

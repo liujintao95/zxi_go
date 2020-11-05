@@ -2,7 +2,7 @@ package zxi
 
 import (
 	"github.com/gin-gonic/gin"
-	"zxi_network_disk_go/zxi/api"
+	"zxi_go/zxi/api"
 )
 
 func UrlMap(router *gin.Engine) {

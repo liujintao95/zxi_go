@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/models"
+    "zxi_go/core"
+    "zxi_go/zxi/models"
 )
 
 type UserFileManager struct {
@@ -27,7 +27,7 @@ func (f *UserFileManager) GetRootByUserId(userId int64) ([]models.UserFile, erro
 		AND uf.dir_id = 0
 		AND uf.user_id = ?
 	`
-	rows, err := utils.Conn.Query(sql, userId)
+	rows, err := core.Conn.Query(sql, userId)
 	if err != nil {
 		return userFileList, err
 	}
@@ -59,7 +59,7 @@ func (f *UserFileManager) GetListByDirId(dirId int64) ([]models.UserFile, error)
 		AND f.is_complete = 1
 		AND uf.dir_id = ?
 	`
-	rows, err := utils.Conn.Query(sql, dirId)
+	rows, err := core.Conn.Query(sql, dirId)
 	if err != nil {
 		return userFileList, err
 	}
@@ -82,7 +82,7 @@ func (f *UserFileManager) Create(userFileMate models.UserFile) (int64, error) {
 		)
 		VALUES(?, ?, ?, ?, ?)
 	`
-	res, err := utils.Conn.Exec(
+	res, err := core.Conn.Exec(
 		sql,
 		userFileMate.File.Id, userFileMate.Directory.Id, userFileMate.UserInfo.Id,
 		userFileMate.Name, userFileMate.IsKey,
@@ -100,7 +100,7 @@ func (f *UserFileManager) Update(userFileMate models.UserFile) error {
 		SET dir_id = ?, name = ?, is_key = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(
+	_, err := core.Conn.Exec(
 		sql,
 		userFileMate.Directory.Id, userFileMate.Name, userFileMate.IsKey, userFileMate.Id,
 	)
@@ -113,7 +113,7 @@ func (f *UserFileManager) UpdateName(name string, id int64) error {
 		SET name = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, name, id)
+	_, err := core.Conn.Exec(sql, name, id)
 	return err
 }
 
@@ -123,7 +123,7 @@ func (f *UserFileManager) UpdateKey(key int, id int64) error {
 		SET is_key = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, key, id)
+	_, err := core.Conn.Exec(sql, key, id)
 	return err
 }
 
@@ -133,7 +133,7 @@ func (f *UserFileManager) UpdateDirId(dirId int, id int64) error {
 		SET dir_id = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, dirId, id)
+	_, err := core.Conn.Exec(sql, dirId, id)
 	return err
 }
 
@@ -143,6 +143,6 @@ func (f *UserFileManager) DelById(id int64) error {
 		SET recycled = 'Y'
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, id)
+	_, err := core.Conn.Exec(sql, id)
 	return err
 }

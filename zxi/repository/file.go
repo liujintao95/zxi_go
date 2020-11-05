@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/models"
+    "zxi_go/core"
+    "zxi_go/zxi/models"
 )
 
 type FileManager struct {
@@ -21,7 +21,7 @@ func (f *FileManager) GetById(id int64) (models.File, error) {
 		WHERE recycled = 'N'
 		AND id = ?
 	`
-	row := utils.Conn.QueryRow(sql, id)
+	row := core.Conn.QueryRow(sql, id)
 	err := row.Scan(
 		&fileMate.Id, &fileMate.Hash, &fileMate.Path, &fileMate.Size, &fileMate.IsComplete,
 	)
@@ -36,7 +36,7 @@ func (f *FileManager) GetByHash(hash string) (models.File, error) {
 		WHERE recycled = 'N'
 		AND hash = ?
 	`
-	row := utils.Conn.QueryRow(sql, hash)
+	row := core.Conn.QueryRow(sql, hash)
 	err := row.Scan(
 		&fileMate.Id, &fileMate.Hash, &fileMate.Path, &fileMate.Size, &fileMate.IsComplete,
 	)
@@ -50,7 +50,7 @@ func (f *FileManager) Create(fileMate models.File) (int64, error) {
 		)
 		VALUES(?, ?, ?, ?)
 	`
-	res, err := utils.Conn.Exec(
+	res, err := core.Conn.Exec(
 		sql,
 		fileMate.Hash, fileMate.Path, fileMate.Size, fileMate.IsComplete,
 	)
@@ -67,7 +67,7 @@ func (f *FileManager) Update(fileMate models.File) error {
 		SET path = ?, size = ?, is_complete = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(
+	_, err := core.Conn.Exec(
 		sql,
 		fileMate.Path, fileMate.Size, fileMate.IsComplete, fileMate.Id,
 	)
@@ -80,7 +80,7 @@ func (f *FileManager) UpdateComplete(complete int, id int64) error {
 		SET is_complete = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, complete, id)
+	_, err := core.Conn.Exec(sql, complete, id)
 	return err
 }
 
@@ -90,7 +90,7 @@ func (f *FileManager) DelByHash(hash string) error {
 		SET recycled = 'Y'
 		WHERE hash = ?
 	`
-	_, err := utils.Conn.Exec(sql, hash)
+	_, err := core.Conn.Exec(sql, hash)
 	return err
 }
 
@@ -100,6 +100,6 @@ func (f *FileManager) DelById(id int64) error {
 		SET recycled = 'Y'
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, id)
+	_, err := core.Conn.Exec(sql, id)
 	return err
 }

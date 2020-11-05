@@ -1,8 +1,8 @@
 package api
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/repository"
+	"zxi_go/utils"
+	"zxi_go/zxi/repository"
 )
 
 var errCheck = utils.ErrCheck

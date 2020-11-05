@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/models"
+    "zxi_go/core"
+    "zxi_go/zxi/models"
 )
 
 type DirectoryManager struct {
@@ -23,7 +23,7 @@ func (d *DirectoryManager) GetByUserIdPathName(userId int64, path string, name s
 		AND path = ?
 		AND name = ?
 	`
-	row := utils.Conn.QueryRow(sql, userId, path, name)
+	row := core.Conn.QueryRow(sql, userId, path, name)
 	err := row.Scan(
 		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)
@@ -39,7 +39,7 @@ func (d *DirectoryManager) GetRootByUserId(userId int64) ([]models.Directory, er
 		AND path = '\\'
 		AND user_id = ?
 	`
-	rows, err := utils.Conn.Query(sql, userId)
+	rows, err := core.Conn.Query(sql, userId)
 	if err != nil {
 		return dirList, err
 	}
@@ -61,7 +61,7 @@ func (d *DirectoryManager) GetByDirId(id int64) (models.Directory, error) {
 		WHERE recycled = 'N'
 		AND id = ?
 	`
-	row := utils.Conn.QueryRow(sql, id)
+	row := core.Conn.QueryRow(sql, id)
 	err := row.Scan(
 		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)
@@ -77,7 +77,7 @@ func (d *DirectoryManager) GetListByUserIdPath(userId int64, path string) ([]mod
 		AND user_id = ?
 		AND path = ?
 	`
-	rows, err := utils.Conn.Query(sql, userId, path)
+	rows, err := core.Conn.Query(sql, userId, path)
 	if err != nil {
 		return dirList, err
 	}
@@ -98,7 +98,7 @@ func (d *DirectoryManager) Create(dirMate models.Directory) (int64, error) {
 		)
 		VALUES(?, ?, ?, ?)
 	`
-	res, err := utils.Conn.Exec(
+	res, err := core.Conn.Exec(
 		sql,
 		dirMate.Name, dirMate.Path, dirMate.IsKey, dirMate.UserInfo.Id,
 	)
@@ -115,7 +115,7 @@ func (d *DirectoryManager) Update(dirMate models.Directory) error {
 		SET name = ?, path = ?, is_key = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(
+	_, err := core.Conn.Exec(
 		sql,
 		dirMate.Name, dirMate.Path, dirMate.IsKey, dirMate.Id,
 	)
@@ -128,7 +128,7 @@ func (d *DirectoryManager) UpdateName(name string, id int64) error {
 		SET name = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, name, id)
+	_, err := core.Conn.Exec(sql, name, id)
 	return err
 }
 
@@ -138,7 +138,7 @@ func (d *DirectoryManager) UpdateKey(key int64, id int64) error {
 		SET is_key = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, key, id)
+	_, err := core.Conn.Exec(sql, key, id)
 	return err
 }
 
@@ -148,7 +148,7 @@ func (d *DirectoryManager) UpdateFId(FId int64, id int64) error {
 		SET fid = ?
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, FId, id)
+	_, err := core.Conn.Exec(sql, FId, id)
 	return err
 }
 
@@ -158,6 +158,6 @@ func (d *DirectoryManager) DelById(id int64) error {
 		SET recycled = 'Y'
 		WHERE id = ?
 	`
-	_, err := utils.Conn.Exec(sql, id)
+	_, err := core.Conn.Exec(sql, id)
 	return err
 }

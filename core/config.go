@@ -1,4 +1,4 @@
-package conf
+package core
 
 const SECRET_KEY = "XHSOI*Y9dfs9cshd9"
 const BLOCK_SIZE = 1024 * 1024 * 5

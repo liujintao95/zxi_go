@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"zxi_network_disk_go/utils"
-	"zxi_network_disk_go/zxi/models"
+    "zxi_go/core"
+    "zxi_go/zxi/models"
 )
 
 type UserManager struct {
@@ -21,7 +21,7 @@ func (u *UserManager) GetByUser(user string) (models.UserInfo, error) {
 		WHERE user = ?
 		AND recycled = 'N'
 	`
-	rows := utils.Conn.QueryRow(sql, user)
+	rows := core.Conn.QueryRow(sql, user)
 	err := rows.Scan(
 		&userMate.Id, &userMate.Name, &userMate.User,
 		&userMate.Pwd, &userMate,
@@ -36,7 +36,7 @@ func (u *UserManager) Create(userMate models.UserInfo) (int64, error) {
 		) 
 		VALUES (?, ?, ?)
 	`
-	res, err := utils.Conn.Exec(
+	res, err := core.Conn.Exec(
 		sql,
 		userMate.User, userMate.User, userMate.Pwd,
 	)
@@ -53,7 +53,7 @@ func (u *UserManager) Update(userMate models.UserInfo) error {
 		SET name = ?, pwd = ?
 		WHERE user=?
 	`
-	_, err := utils.Conn.Exec(
+	_, err := core.Conn.Exec(
 		sql,
 		userMate.Name, userMate.Pwd, userMate.User,
 	)
@@ -66,6 +66,6 @@ func (u *UserManager) DelByUser(user string) error {
 		SET recycled = 'Y'
 		WHERE user = ?
 	`
-	_, err := utils.Conn.Exec(sql, user)
+	_, err := core.Conn.Exec(sql, user)
 	return err
 }

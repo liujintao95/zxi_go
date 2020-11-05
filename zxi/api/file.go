@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"zxi_network_disk_go/conf"
-	"zxi_network_disk_go/zxi/field"
-	"zxi_network_disk_go/zxi/handler"
-	"zxi_network_disk_go/zxi/models"
-	"zxi_network_disk_go/zxi/parser"
+	"zxi_go/core"
+	"zxi_go/zxi/field"
+	"zxi_go/zxi/handler"
+	"zxi_go/zxi/models"
+	"zxi_go/zxi/parser"
 )
 
 func UploadFile(g *gin.Context) {
@@ -31,7 +31,7 @@ func UploadFile(g *gin.Context) {
 	} else {
 		fileId, err = fileManager.Create(models.File{
 			Hash: postFile.Hash,
-			Path: filepath.Join(conf.SAVE_PATH, postFile.Hash),
+			Path: filepath.Join(core.SAVE_PATH, postFile.Hash),
 			Size: postFile.Size,
 		})
 		errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
@@ -43,7 +43,7 @@ func UploadFile(g *gin.Context) {
 			_, err = uploadManager.Create(models.Upload{
 				File:      models.File{Id: fileId},
 				UserInfo:  models.UserInfo{Id: userMate.Id},
-				BlockSize: conf.BLOCK_SIZE,
+				BlockSize: core.BLOCK_SIZE,
 				LocalPath: postFile.Path,
 			})
 		}
@@ -111,7 +111,7 @@ func UploadFiles(g *gin.Context) {
 		} else {
 			fileId, err = fileManager.Create(models.File{
 				Hash: postFile.Hash,
-				Path: filepath.Join(conf.SAVE_PATH, postFile.Hash),
+				Path: filepath.Join(core.SAVE_PATH, postFile.Hash),
 				Size: postFile.Size,
 			})
 			errCheck(g, err, "数据库写入错误", http.StatusInternalServerError)
@@ -123,7 +123,7 @@ func UploadFiles(g *gin.Context) {
 				_, err = uploadManager.Create(models.Upload{
 					File:      models.File{Id: fileId},
 					UserInfo:  models.UserInfo{Id: userMate.Id},
-					BlockSize: conf.BLOCK_SIZE,
+					BlockSize: core.BLOCK_SIZE,
 					LocalPath: postFile.Path,
 				})
 			}
