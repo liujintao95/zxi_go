@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"github.com/gin-gonic/gin"
 	_ "os"
-    "zxi_go/core"
+	"zxi_go/core"
 )
 
 func ErrCheck(g *gin.Context, err error, msg string, httpCode int) {

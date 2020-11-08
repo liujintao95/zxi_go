@@ -1,8 +1,8 @@
-package repository
+package tmp
 
 import (
-    "zxi_go/core"
-    "zxi_go/zxi/models"
+	"zxi_go/core"
+	"zxi_go/zxi/models"
 )
 
 type UserManager struct {

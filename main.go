@@ -3,9 +3,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"zxi_go/core"
-	network "zxi_go/zxi"
+	"zxi_go/zxi/file/url"
 )
-
 
 func main() {
 	core.LogInit()
@@ -18,6 +17,6 @@ func main() {
 	// logger and recovery (crash-free) 中间件
 	router := gin.Default()
 	router.Use(core.Cors())
-	network.UrlMap(router)
+	url.UrlMap(router)
 	_ = router.Run(":5000")
 }
