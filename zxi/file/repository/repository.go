@@ -262,6 +262,69 @@ func GetFileListByDirId(dirId int64) ([]models.UserFile, error) {
 	return userFileList, err
 }
 
+func GetUploadListByUserId(userId int64) ([]models.Upload, error) {
+	var uploadList []models.Upload
+	sql := `
+		SELECT up.id, ui.name, ui.user, fi.hash, fi.size, fi.path,
+		fi.is_complete, local_path, block_size, up.is_complete
+		FROM upload AS up
+		INNER JOIN file AS fi
+		ON up.file_id = fi.id
+		INNER JOIN user_info AS ui
+		ON up.user_id = ui.id
+		WHERE up.recycled = 'N'
+		AND up.user_id = ?
+	`
+	rows, err := core.Conn.Query(sql, userId)
+	if err != nil {
+		return uploadList, err
+	}
+	for rows.Next() {
+		uploadMate := new(models.Upload)
+		_ = rows.Scan(
+			&uploadMate.Id, &uploadMate.UserInfo.Name, &uploadMate.UserInfo.User,
+			&uploadMate.File.Hash, &uploadMate.File.Size, &uploadMate.File.Path,
+			&uploadMate.File.IsComplete, &uploadMate.LocalPath, &uploadMate.BlockSize,
+			&uploadMate.IsComplete,
+		)
+		uploadList = append(uploadList, *uploadMate)
+	}
+	return uploadList, err
+}
+
+func GetUploadInfoById(id int64) (models.Upload, error) {
+	uploadMate := new(models.Upload)
+	sql := `
+		SELECT up.id, ui.name, ui.user, fi.hash, fi.size, fi.path,
+		fi.is_complete, local_path, block_size, up.is_complete
+		FROM upload AS up
+		INNER JOIN file AS fi
+		ON up.file_id = fi.id
+		INNER JOIN user_info AS ui
+		ON up.user_id = ui.id
+		WHERE up.recycled = 'N'
+		AND up.id = ?
+	`
+	rows := core.Conn.QueryRow(sql, id)
+	err := rows.Scan(
+		&uploadMate.Id, &uploadMate.UserInfo.Name, &uploadMate.UserInfo.User,
+		&uploadMate.File.Hash, &uploadMate.File.Size, &uploadMate.File.Path,
+		&uploadMate.File.IsComplete, &uploadMate.LocalPath, &uploadMate.BlockSize,
+		&uploadMate.IsComplete,
+	)
+	return *uploadMate, err
+}
+
+func UpdateUploadComplete(complete int, id int64) error {
+	sql := `
+		UPDATE upload 
+		SET is_complete = ?
+		WHERE id = ?
+	`
+	_, err := core.Conn.Exec(sql, complete, id)
+	return err
+}
+
 func GetUserFileInfoByUserIdFileId(userId int64, fileId int64) (models.Upload, error) {
 	uploadMate := new(models.Upload)
 	sql := `

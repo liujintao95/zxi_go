@@ -148,3 +148,15 @@ func GetFileList(dirId int64, userId int64) ([]models.UserFile, error) {
 		return repository.GetFileListByDirId(dirId)
 	}
 }
+
+func GetUploadList(userId int64) ([]models.Upload, error) {
+	return repository.GetUploadListByUserId(userId)
+}
+
+func GetUploadInfo(uploadId int64) (models.Upload, error) {
+	return repository.GetUploadInfoById(uploadId)
+}
+
+func SetIsComplete(uploadId int64, state int) error {
+	return repository.UpdateUploadComplete(state, uploadId)
+}
