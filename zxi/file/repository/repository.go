@@ -1,6 +1,7 @@
 package repository
 
 import (
+	MySql "database/sql"
 	"zxi_go/core"
 	"zxi_go/zxi/models"
 )
@@ -119,6 +120,10 @@ func GetUploadInfoByUserIdFileId(userId int64, fileId int64) (models.Upload, err
 		&uploadMate.File.IsComplete, &uploadMate.LocalPath, &uploadMate.BlockSize,
 		&uploadMate.IsComplete,
 	)
+	if err == MySql.ErrNoRows{
+		return *uploadMate, nil
+	}
+	return *uploadMate, err
 	return *uploadMate, err
 }
 
@@ -136,6 +141,10 @@ func GetDirInfoByUserIdPathName(userId int64, path string, name string) (models.
 	err := row.Scan(
 		&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 	)
+	if err == MySql.ErrNoRows{
+		return *dirMate, nil
+	}
+	return *dirMate, err
 	return *dirMate, err
 }
 
@@ -151,6 +160,9 @@ func GetFileInfoByHash(hash string) (models.File, error) {
 	err := row.Scan(
 		&fileMate.Id, &fileMate.Hash, &fileMate.Path, &fileMate.Size, &fileMate.IsComplete,
 	)
+	if err == MySql.ErrNoRows{
+		return *fileMate, nil
+	}
 	return *fileMate, err
 }
 
@@ -169,7 +181,7 @@ func GetRootDirListByUserId(userId int64) ([]models.Directory, error) {
 	}
 	for rows.Next() {
 		dirMate := new(models.Directory)
-		_ = rows.Scan(
+		err = rows.Scan(
 			&dirMate.Id, &dirMate.Name, &dirMate.Path, &dirMate.IsKey,
 		)
 		dirList = append(dirList, *dirMate)
@@ -315,6 +327,29 @@ func GetUploadInfoById(id int64) (models.Upload, error) {
 	return *uploadMate, err
 }
 
+func GetUploadBlockListByUploadId(uploadId int64) ([]models.UploadBlock, error) {
+	var blockList []models.UploadBlock
+	sql := `
+		SELECT id, upload_id, offset, size, is_complete
+		FROM upload_block
+		WHERE recycled = 'N'
+		AND upload_id = ?
+	`
+	rows, err := core.Conn.Query(sql, uploadId)
+	if err != nil {
+		return blockList, err
+	}
+	for rows.Next() {
+		blockMate := new(models.UploadBlock)
+		_ = rows.Scan(
+			&blockMate.Id, &blockMate.Upload.Id, &blockMate.Offset,
+			&blockMate.Size, &blockMate.IsComplete,
+		)
+		blockList = append(blockList, *blockMate)
+	}
+	return blockList, err
+}
+
 func UpdateUploadComplete(complete int, id int64) error {
 	sql := `
 		UPDATE upload 
@@ -325,26 +360,26 @@ func UpdateUploadComplete(complete int, id int64) error {
 	return err
 }
 
-func GetUserFileInfoByUserIdFileId(userId int64, fileId int64) (models.Upload, error) {
-	uploadMate := new(models.Upload)
+func GetUserFileInfoByUserIdFileId(userId int64, fileId int64) ([]models.UserFile, error) {
+	var userFileList []models.UserFile
 	sql := `
-		SELECT up.id, ui.name, ui.user, fi.hash, fi.size, fi.path,
-		fi.is_complete, local_path, block_size, up.is_complete
-		FROM upload AS up
-		INNER JOIN file AS fi
-		ON up.file_id = fi.id
-		INNER JOIN user_info AS ui
-		ON up.user_id = ui.id
-		WHERE up.recycled = 'N'
-		AND up.user_id = ?
-		AND up.file_id = ?
+		SELECT id, file_id, dir_id, user_id, name, is_key
+		FROM user_file
+		WHERE recycled = 'N'
+		AND user_id = ?
+		AND file_id = ?
 	`
-	rows := core.Conn.QueryRow(sql, userId, fileId)
-	err := rows.Scan(
-		&uploadMate.Id, &uploadMate.UserInfo.Name, &uploadMate.UserInfo.User,
-		&uploadMate.File.Hash, &uploadMate.File.Size, &uploadMate.File.Path,
-		&uploadMate.File.IsComplete, &uploadMate.LocalPath, &uploadMate.BlockSize,
-		&uploadMate.IsComplete,
-	)
-	return *uploadMate, err
+	rows, err := core.Conn.Query(sql, userId, fileId)
+	if err != nil {
+		return userFileList, err
+	}
+	for rows.Next() {
+		userFileMate := new(models.UserFile)
+		_ = rows.Scan(
+			&userFileMate.Id, &userFileMate.File.Id, &userFileMate.Directory.Id,
+			&userFileMate.UserInfo.Id, &userFileMate.Name, &userFileMate.IsKey,
+		)
+		userFileList = append(userFileList, *userFileMate)
+	}
+	return userFileList, err
 }

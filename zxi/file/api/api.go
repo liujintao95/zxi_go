@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path"
@@ -12,30 +11,27 @@ import (
 )
 
 func SaveFileInfo(g *gin.Context) {
-	fileJson := g.PostForm("file_json")
-	userInter, _ := g.Get("userInfo")
-	userMate := userInter.(models.UserInfo)
-
-	postFile := new(parser.PostFileInfo)
-	err := json.Unmarshal([]byte(fileJson), postFile)
-	if err != nil {
+	var postParser parser.FileInfo
+	if err := g.Bind(&postParser); err != nil{
 		g.JSON(http.StatusBadRequest, gin.H{"err": err})
 		return
 	}
+	userInter, _ := g.Get("userInfo")
+	userMate := userInter.(models.UserInfo)
 
-	_, err = handlers.CreateOrIgnoreFile(postFile.Hash, postFile.Size)
+	_, err := handlers.CreateOrIgnoreFile(postParser.Hash, postParser.Size)
 	if err != nil {
 		g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
 	}
 
 	lastId, err := handlers.CreateOrIgnoreUpload(
-		postFile.Hash, postFile.Path, userMate.Id)
+		postParser.Hash, postParser.Path, userMate.Id)
 	if err != nil {
 		g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
 	} else if lastId != 0 {
-		err = handlers.CreateUploadBlock(lastId, postFile.Size)
+		err = handlers.CreateUploadBlock(lastId, postParser.Size)
 		if err != nil {
 			g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			return
@@ -43,7 +39,7 @@ func SaveFileInfo(g *gin.Context) {
 	}
 
 	_, err = handlers.CreateUserFile(
-		postFile.Hash, postFile.Name, userMate.Id, 0)
+		postParser.Hash, postParser.Name, userMate.Id, 0)
 	if err != nil {
 		g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
@@ -53,40 +49,37 @@ func SaveFileInfo(g *gin.Context) {
 }
 
 func SaveFilesInfo(g *gin.Context) {
-	filesJsonList := g.PostFormArray("files_json")
-	rootPath := g.PostForm("root")
+	var postParser parser.DirInfo
+	if err := g.Bind(&postParser); err != nil{
+		g.JSON(http.StatusBadRequest, gin.H{"err": err})
+		return
+	}
 	userInter, _ := g.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 
-	for _, fileJson := range filesJsonList {
-		postFile := new(parser.PostFileInfo)
-		err := json.Unmarshal([]byte(fileJson), postFile)
-		if err != nil {
-			g.JSON(http.StatusBadRequest, gin.H{"err": err})
-			return
-		}
-		relativePath := handlers.AbsolutePathToRelativePath(postFile.Path, rootPath)
+	for _, file := range postParser.Files {
+		relativePath := handlers.AbsolutePathToRelativePath(file.Path, postParser.Root)
 		dirId, err := handlers.CreatePath(relativePath, userMate.Id)
 		if err != nil {
 			g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			return
 		}
 
-		_, err = handlers.CreateOrIgnoreFile(postFile.Hash, postFile.Size)
+		_, err = handlers.CreateOrIgnoreFile(file.Hash, file.Size)
 		if err != nil {
 			g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			return
 		}
 
 		_, err = handlers.CreateOrIgnoreUpload(
-			postFile.Hash, postFile.Path, userMate.Id)
+			file.Hash, file.Path, userMate.Id)
 		if err != nil {
 			g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			return
 		}
 
 		_, err = handlers.CreateUserFile(
-			postFile.Hash, postFile.Name, userMate.Id, dirId)
+			file.Hash, file.Name, userMate.Id, dirId)
 		if err != nil {
 			g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 			return
@@ -155,8 +148,8 @@ func ShowUploadInfo(g *gin.Context) {
 }
 
 func UploadFile(g *gin.Context) {
-	uploadIdStr := g.PostForm("id")
-	uploadId, err := strconv.ParseInt(uploadIdStr, 10, 64)
+	var postParser parser.UploadFile
+	err := g.Bind(&postParser)
 	f, err := g.FormFile("file")
 	if err != nil {
 		g.JSON(http.StatusBadRequest, gin.H{"err": err})
@@ -167,7 +160,7 @@ func UploadFile(g *gin.Context) {
 		g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return
 	}
-	err = handlers.SetIsComplete(uploadId, 1)
+	err = handlers.SetIsComplete(postParser.Id, 1)
 	if err != nil {
 		g.JSON(http.StatusInternalServerError, gin.H{"err": err})
 		return

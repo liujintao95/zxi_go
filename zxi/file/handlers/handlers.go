@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 	consts "zxi_go/zxi/file/const"
+	"zxi_go/zxi/file/parser"
 	"zxi_go/zxi/file/repository"
 	"zxi_go/zxi/models"
 )
@@ -149,8 +152,52 @@ func GetFileList(dirId int64, userId int64) ([]models.UserFile, error) {
 	}
 }
 
-func GetUploadList(userId int64) ([]models.Upload, error) {
-	return repository.GetUploadListByUserId(userId)
+func GetUploadList(userId int64) ([]parser.ShowUpload, error) {
+	uploadList, err := repository.GetUploadListByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
+	var result []parser.ShowUpload
+	for _, uploadInfo := range uploadList {
+		blockList, err := repository.GetUploadBlockListByUploadId(uploadInfo.Id)
+		if err != nil {
+			return nil, err
+		}
+		if uploadInfo.IsComplete == 1 {
+			result = append(result, parser.ShowUpload{
+				Id:       uploadInfo.Id,
+				Name:     GetFileByPath(uploadInfo.LocalPath),
+				Size:     StrSize(uploadInfo.File.Size),
+				Progress: 100,
+			})
+		} else {
+			totalNum := 0
+			completeNum := 0
+			for _, blockMate := range blockList {
+				if blockMate.IsComplete == 1 {
+					completeNum++
+				}
+				totalNum++
+			}
+			var progress float64
+			if totalNum != 0 {
+				progress, _ = strconv.ParseFloat(
+					fmt.Sprintf("%.2f", float64(completeNum)/float64(totalNum)*100),
+					64,
+				)
+			} else {
+				progress = 0
+			}
+
+			result = append(result, parser.ShowUpload{
+				Id:       uploadInfo.Id,
+				Name:     GetFileByPath(uploadInfo.LocalPath),
+				Size:     StrSize(uploadInfo.File.Size),
+				Progress: progress,
+			})
+		}
+	}
+	return result, nil
 }
 
 func GetUploadInfo(uploadId int64) (models.Upload, error) {
@@ -159,4 +206,35 @@ func GetUploadInfo(uploadId int64) (models.Upload, error) {
 
 func SetIsComplete(uploadId int64, state int) error {
 	return repository.UpdateUploadComplete(state, uploadId)
+}
+
+func GetFileByPath(path string) string{
+	path = strings.Replace(path, `\`, `/`, -1)
+	if path == "" {
+		return "."
+	}
+	for len(path) > 0 && path[len(path)-1] == '/' {
+		path = path[0 : len(path)-1]
+	}
+	if i := strings.LastIndex(path, "/"); i >= 0 {
+		path = path[i+1:]
+	}
+	if path == "" {
+		return "/"
+	}
+	return path
+}
+
+func StrSize(size int64) string{
+	floatSize := float64(size)
+	unitList := [5]string{"B", "KB", "MB", "GB", "TB"}
+	index := 0
+	for ;floatSize > 1024; {
+		index++
+		floatSize, _ = strconv.ParseFloat(
+			fmt.Sprintf("%.2f", floatSize/float64(1024)),
+			64,
+		)
+	}
+	return fmt.Sprintf("%.2f%s", floatSize, unitList[index])
 }
