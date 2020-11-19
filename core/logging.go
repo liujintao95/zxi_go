@@ -13,7 +13,7 @@ func LogInit() {
 		Logging.SetOutput(file)
 		Logging.Out = file
 	} else {
-		Logging.Info("Failed to log to file, using default stderr")
+		Logging.Info("Failed to log to file_old, using default stderr")
 	}
 
 	Logging.Formatter = &logrus.TextFormatter{}
