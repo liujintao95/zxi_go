@@ -52,6 +52,15 @@ func (h *Handlers) GetFileList(path string, userId int) []models.UserFile {
 	return *fileList
 }
 
+func (h *Handlers) GetFileInfo(fileId int) models.File {
+	fileMate := new(models.File)
+	LocalDB.Where(&models.Upload{
+		Recycled: "N",
+		Id:       fileId,
+	}).First(fileMate)
+	return *fileMate
+}
+
 func (h *Handlers) CreateUserFile(hash string, fileName string, userId int, path string) int {
 	var dirPath, dirName string
 	fileMate := new(models.File)
