@@ -14,51 +14,48 @@ type Handlers struct {
 var handlers = Handlers{}
 
 func (h *Handlers) CreateOrIgnoreUploadBlock(uploadId int, size int) {
-	uploadMate := new(models.Upload)
+	var uploadMate models.Upload
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		Id:       uploadId,
-	}).First(uploadMate)
+	}).First(&uploadMate)
 	if uploadMate.IsComplete == 0 {
 		blockNum := (size / BLOCK_SIZE) + 1
 		for i := 0; i < blockNum; i++ {
 			var blockSize int
+			var uploadBlockMate models.UploadBlock
 			if i+1 == blockNum {
 				blockSize = size % BLOCK_SIZE
 			} else {
 				blockSize = BLOCK_SIZE
 			}
-
-			uploadBlockMate := new(models.UploadBlock)
 			LocalDB.Where(&models.UploadBlock{
 				Recycled: "N",
 				UploadId: uploadId,
 				Offset:   i,
 				Size:     blockSize,
-			}).First(uploadBlockMate)
+			}).First(&uploadBlockMate)
 			if uploadBlockMate.Id == 0 {
 				uploadBlockMate.UploadId = uploadId
 				uploadBlockMate.Offset = i
 				uploadBlockMate.Size = blockSize
-				LocalDB.Create(uploadBlockMate)
+				LocalDB.Create(&uploadBlockMate)
 			}
 		}
 	}
 }
 
 func (h *Handlers) CreateOrIgnoreUpload(hash string, path string, userId int) int {
-	fileMate := new(models.File)
-	uploadMate := new(models.Upload)
-
+	var fileMate models.File
+	var uploadMate models.Upload
 	LocalDB.Where(&models.File{
 		Recycled: "N",
 		Hash:     hash,
-	}).First(fileMate)
+	}).First(&fileMate)
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		FileId:   fileMate.Id,
-	}).First(uploadMate)
-
+	}).First(&uploadMate)
 	if uploadMate.Id == 0 {
 		uploadMate.FileId = fileMate.Id
 		uploadMate.UserInfoId = userId
@@ -71,57 +68,45 @@ func (h *Handlers) CreateOrIgnoreUpload(hash string, path string, userId int) in
 			uploadMate.Uploading = 1
 			uploadMate.IsComplete = 0
 		}
-		LocalDB.Create(uploadMate)
+		LocalDB.Create(&uploadMate)
 	}
 	return uploadMate.Id
 }
 
-func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUpload, int) {
+func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUploadTable, int) {
 	var count int
+	var uploadList []models.Upload
+	var result []ShowUploadTable
 	start := (page - 1) * size
-	uploadList := new([]models.Upload)
-
 	LocalDB.Where(&models.Upload{
 		Recycled:   "N",
 		UserInfoId: userId,
-	}).Order("id desc").Limit(size).Offset(start).Find(uploadList)
+	}).Order("id desc").Limit(size).Offset(start).Find(&uploadList)
 	LocalDB.Model(&models.Upload{}).Where(&models.Upload{
 		Recycled:   "N",
 		UserInfoId: userId,
 	}).Count(&count)
-
-	var result []ShowUpload
-	for _, uploadInfo := range *uploadList {
-		fileMate := new(models.File)
+	for _, uploadInfo := range uploadList {
+		var progress float64
+		var fileMate models.File
 		LocalDB.Where(&models.File{
 			Id: uploadInfo.FileId,
-		}).First(fileMate)
+		}).First(&fileMate)
 		if uploadInfo.IsComplete == 1 {
-			result = append(result, ShowUpload{
-				Id:         uploadInfo.Id,
-				Uploading:  uploadInfo.Uploading,
-				IsComplete: uploadInfo.IsComplete,
-				LocalPath:  uploadInfo.LocalPath,
-				Name:       GetFileByPath(uploadInfo.LocalPath),
-				Size:       StrSize(fileMate.Size),
-				Progress:   100,
-			})
+			progress = 100
 		} else {
-			totalNum := 0
-			completeNum := 0
-			blockList := new([]models.UploadBlock)
+			var totalNum, completeNum int
+			var blockList []models.UploadBlock
 			LocalDB.Where(&models.UploadBlock{
 				Recycled: "N",
 				UploadId: uploadInfo.Id,
-			})
-
-			for _, blockMate := range *blockList {
+			}).Find(&blockList)
+			for _, blockMate := range blockList {
 				if blockMate.IsComplete == 1 {
 					completeNum++
 				}
 				totalNum++
 			}
-			var progress float64
 			if totalNum != 0 {
 				progress, _ = strconv.ParseFloat(
 					fmt.Sprintf("%.2f", float64(completeNum)/float64(totalNum)*100),
@@ -130,58 +115,68 @@ func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUpload, 
 			} else {
 				progress = 0
 			}
-			result = append(result, ShowUpload{
+		}
+		result = append(result, ShowUploadTable{
+			Upload: &models.Upload{
 				Id:         uploadInfo.Id,
 				Uploading:  uploadInfo.Uploading,
 				IsComplete: uploadInfo.IsComplete,
 				LocalPath:  uploadInfo.LocalPath,
-				Name:       GetFileByPath(uploadInfo.LocalPath),
-				Size:       StrSize(fileMate.Size),
-				Progress:   progress,
-			})
-		}
+			},
+			Name:       GetFileByPath(uploadInfo.LocalPath),
+			Size:       StrSize(fileMate.Size),
+			Progress:   progress,
+		})
 	}
 	return result, count
 }
 
-func (h *Handlers) GetUploadInfo(uploadId int) models.Upload {
-	uploadMate := new(models.Upload)
+func (h *Handlers) GetUploadInfo(uploadId int) ShowUploadInfo {
+	var uploadMate models.Upload
+	var uploadBlockList []models.UploadBlock
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		Id:       uploadId,
-	}).First(uploadMate)
-	return *uploadMate
+	}).First(&uploadMate)
+	LocalDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		UploadId: uploadId,
+	}).Find(&uploadBlockList)
+	return ShowUploadInfo{
+		Upload: &uploadMate,
+		BlockList: uploadBlockList,
+	}
 }
 
 func (h *Handlers) GetFileInfoByUploadId(uploadId int) models.File {
-	uploadMate := new(models.Upload)
-	fileMate := new(models.File)
+	var uploadMate models.Upload
+	var fileMate models.File
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		Id:       uploadId,
-	}).First(uploadMate)
+	}).First(&uploadMate)
 	LocalDB.Where(&models.File{
 		Recycled: "N",
 		Id:       uploadMate.FileId,
-	}).First(fileMate)
-	return *fileMate
+	}).First(&fileMate)
+	return fileMate
 }
 
 func (h *Handlers) SetIsComplete(uploadId int, state int) {
-	uploadMate := new(models.Upload)
-	fileMate := new(models.File)
+	var uploadMate models.Upload
+	var fileMate models.File
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		Id:       uploadId,
-	}).First(uploadMate)
+	}).First(&uploadMate)
 	LocalDB.Where(&models.File{
 		Recycled: "N",
 		Id:       uploadMate.FileId,
-	}).First(fileMate)
+	}).First(&fileMate)
 	uploadMate.IsComplete = state
 	fileMate.IsComplete = state
-	LocalDB.Save(uploadMate)
-	LocalDB.Save(fileMate)
+	LocalDB.Save(&uploadMate)
+	LocalDB.Save(&fileMate)
 }
 
 func GetFileByPath(path string) string {

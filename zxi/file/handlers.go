@@ -13,7 +13,7 @@ type Handlers struct {
 var handlers = Handlers{}
 
 func (h *Handlers) GetDirList(path string, userId int) []models.Directory {
-	dirList := new([]models.Directory)
+	var dirList []models.Directory
 	if path == "" {
 		path = "/"
 	}
@@ -21,14 +21,14 @@ func (h *Handlers) GetDirList(path string, userId int) []models.Directory {
 		Recycled:   "N",
 		Path:       path,
 		UserInfoId: userId,
-	}).Find(dirList)
-	return *dirList
+	}).Find(&dirList)
+	return dirList
 }
 
 func (h *Handlers) GetFileList(path string, userId int) []models.UserFile {
 	var dirPath, dirName string
-	dirMate := new(models.Directory)
-	fileList := new([]models.UserFile)
+	var dirMate models.Directory
+	var fileList []models.UserFile
 	if path == "" {
 		dirName, dirPath = "/", "-"
 	} else {
@@ -39,7 +39,7 @@ func (h *Handlers) GetFileList(path string, userId int) []models.UserFile {
 		Path:       dirPath,
 		Name:       dirName,
 		UserInfoId: userId,
-	}).First(dirMate)
+	}).First(&dirMate)
 	LocalDB.Where(&models.UserFile{
 		Recycled: "N",
 		File: models.File{
@@ -48,23 +48,23 @@ func (h *Handlers) GetFileList(path string, userId int) []models.UserFile {
 		},
 		DirectoryId: dirMate.Id,
 		UserInfoId:  userId,
-	}).Find(fileList)
-	return *fileList
+	}).Find(&fileList)
+	return fileList
 }
 
 func (h *Handlers) GetFileInfo(fileId int) models.File {
-	fileMate := new(models.File)
+	var fileMate models.File
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		Id:       fileId,
-	}).First(fileMate)
-	return *fileMate
+	}).First(&fileMate)
+	return fileMate
 }
 
 func (h *Handlers) CreateUserFile(hash string, fileName string, userId int, path string) int {
 	var dirPath, dirName string
-	fileMate := new(models.File)
-	dirMate := new(models.Directory)
+	var fileMate models.File
+	var dirMate models.Directory
 	if path == "" {
 		dirName, dirPath = "/", "-"
 	} else {
@@ -73,53 +73,52 @@ func (h *Handlers) CreateUserFile(hash string, fileName string, userId int, path
 	LocalDB.Where(&models.File{
 		Recycled: "N",
 		Hash:     hash,
-	}).First(fileMate)
+	}).First(&fileMate)
 	LocalDB.Where(&models.Directory{
 		Recycled:   "N",
 		UserInfoId: userId,
 		Name:       dirName,
 		Path:       dirPath,
-	}).First(dirMate)
+	}).First(&dirMate)
 	userFileMate := &models.UserFile{
 		Name:        fileName,
 		UserInfoId:  userId,
 		FileId:      fileMate.Id,
 		DirectoryId: dirMate.Id,
 	}
-	LocalDB.Create(userFileMate)
+	LocalDB.Create(&userFileMate)
 	return userFileMate.Id
 }
 
 func (h *Handlers) CreateOrIgnoreFile(hash string, size int) int {
-	fileMate := new(models.File)
+	var fileMate models.File
 	LocalDB.Where(&models.File{
 		Recycled: "N",
 		Hash:     hash,
-	}).First(fileMate)
+	}).First(&fileMate)
 	if fileMate.Id == 0 {
 		fileMate.Hash = hash
 		fileMate.Path = filepath.Join(SAVE_PATH, hash)
 		fileMate.Size = size
-		LocalDB.Create(fileMate)
+		LocalDB.Create(&fileMate)
 	}
 	return fileMate.Id
 }
 
 func (h *Handlers) CreateOrIgnoreDir(dirName string, dirPath string, userId int) int {
-	dirMate := new(models.Directory)
+	var dirMate models.Directory
 	LocalDB.Where(&models.Directory{
 		Recycled:   "N",
 		Name:       dirName,
 		Path:       dirPath,
 		UserInfoId: userId,
-	}).First(dirMate)
+	}).First(&dirMate)
 	if dirMate.Id == 0 {
 		dirMate.Name = dirName
 		dirMate.Path = dirPath
 		dirMate.UserInfoId = userId
 		dirMate.IsKey = 0
-		LocalDB.Create(dirMate)
-		return dirMate.Id
+		LocalDB.Create(&dirMate)
 	}
 	return dirMate.Id
 }
