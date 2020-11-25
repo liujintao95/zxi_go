@@ -10,4 +10,5 @@ func UrlMap(router *gin.Engine) {
 	authorized.GET("/upload/show", view.ShowUploads)
 	authorized.GET("/upload/info", view.ShowUploadInfo)
 	authorized.POST("/upload/file", view.UploadFile)
+	authorized.POST("/upload/block", view.UploadBlock)
 }

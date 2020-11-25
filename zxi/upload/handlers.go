@@ -117,12 +117,10 @@ func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUploadTa
 			}
 		}
 		result = append(result, ShowUploadTable{
-			Upload: &models.Upload{
-				Id:         uploadInfo.Id,
-				Uploading:  uploadInfo.Uploading,
-				IsComplete: uploadInfo.IsComplete,
-				LocalPath:  uploadInfo.LocalPath,
-			},
+			Id:         uploadInfo.Id,
+			Uploading:  uploadInfo.Uploading,
+			IsComplete: uploadInfo.IsComplete,
+			LocalPath:  uploadInfo.LocalPath,
 			Name:       GetFileByPath(uploadInfo.LocalPath),
 			Size:       StrSize(fileMate.Size),
 			Progress:   progress,
@@ -143,7 +141,13 @@ func (h *Handlers) GetUploadInfo(uploadId int) ShowUploadInfo {
 		UploadId: uploadId,
 	}).Find(&uploadBlockList)
 	return ShowUploadInfo{
-		Upload: &uploadMate,
+		Id:         uploadMate.Id,
+		LocalPath:  uploadMate.LocalPath,
+		BlockSize:  uploadMate.BlockSize,
+		Uploading:  uploadMate.Uploading,
+		IsComplete: uploadMate.IsComplete,
+		FileId:     uploadMate.FileId,
+		UserInfoId: uploadMate.UserInfoId,
 		BlockList: uploadBlockList,
 	}
 }
@@ -162,7 +166,16 @@ func (h *Handlers) GetFileInfoByUploadId(uploadId int) models.File {
 	return fileMate
 }
 
-func (h *Handlers) SetIsComplete(uploadId int, state int) {
+func (h *Handlers)GetUploadBlockInfo(blockId int) models.UploadBlock {
+	var uploadBlockMate models.UploadBlock
+	LocalDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		Id:       blockId,
+	}).First(&uploadBlockMate)
+	return uploadBlockMate
+}
+
+func (h *Handlers) SetUploadIsComplete(uploadId int, state int) {
 	var uploadMate models.Upload
 	var fileMate models.File
 	LocalDB.Where(&models.Upload{
@@ -177,6 +190,16 @@ func (h *Handlers) SetIsComplete(uploadId int, state int) {
 	fileMate.IsComplete = state
 	LocalDB.Save(&uploadMate)
 	LocalDB.Save(&fileMate)
+}
+
+func (h *Handlers) SetBlockIsComplete(blockId int, state int) {
+	var uploadBlockMate models.UploadBlock
+	LocalDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		Id:       blockId,
+	}).First(&uploadBlockMate)
+	uploadBlockMate.IsComplete = state
+	LocalDB.Save(&uploadBlockMate)
 }
 
 func GetFileByPath(path string) string {

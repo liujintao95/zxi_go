@@ -60,7 +60,7 @@ func (v *View) ShowUploadInfo(g *gin.Context) {
 
 func (v *View) UploadFile(g *gin.Context) {
 	uploadIdStr := g.PostForm("id")
-	f, err := g.FormFile("file")
+	file, err := g.FormFile("file")
 	uploadId, err := strconv.Atoi(uploadIdStr)
 	if err != nil {
 		fmt.Println(err)
@@ -72,8 +72,8 @@ func (v *View) UploadFile(g *gin.Context) {
 		return
 	}
 	fileMate := handlers.GetFileInfoByUploadId(uploadId)
-	savePath := path.Join("files", fileMate.Hash+f.Filename)
-	err = g.SaveUploadedFile(f, savePath)
+	savePath := path.Join("files", fileMate.Hash+file.Filename)
+	err = g.SaveUploadedFile(file, savePath)
 	if err != nil {
 		g.JSON(http.StatusBadRequest, gin.H{
 			"success":  false,
@@ -82,7 +82,40 @@ func (v *View) UploadFile(g *gin.Context) {
 		})
 		return
 	}
-	handlers.SetIsComplete(uploadId, 1)
+	handlers.SetUploadIsComplete(uploadId, 1)
+
+	g.JSON(http.StatusOK, gin.H{"success": true})
+}
+
+func (v *View) UploadBlock(g *gin.Context) {
+	uploadIdStr := g.PostForm("upload_id")
+	blockIdStr := g.PostForm("block_id")
+	block, err := g.FormFile("block")
+	uploadId, err := strconv.Atoi(uploadIdStr)
+	blockId, err := strconv.Atoi(blockIdStr)
+	if err != nil {
+		fmt.Println(err)
+		g.JSON(http.StatusBadRequest, gin.H{
+			"success":  false,
+			"err_code": core.ERR_BAD_REQ,
+			"err_msg":  err.Error(),
+		})
+		return
+	}
+	fileMate := handlers.GetFileInfoByUploadId(uploadId)
+	uploadBlockMate := handlers.GetUploadBlockInfo(blockId)
+	savePath := path.Join(
+		"blocks", fmt.Sprintf("%s__%d", fileMate.Hash, uploadBlockMate.Offset))
+	err = g.SaveUploadedFile(block, savePath)
+	if err != nil {
+		g.JSON(http.StatusBadRequest, gin.H{
+			"success":  false,
+			"err_code": core.ERR_SAVE_FILE,
+			"err_msg":  err.Error(),
+		})
+		return
+	}
+	handlers.SetBlockIsComplete(blockId, 1)
 
 	g.JSON(http.StatusOK, gin.H{"success": true})
 }

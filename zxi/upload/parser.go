@@ -1,15 +1,26 @@
 package upload
 
-import "zxi_go/zxi/models"
+import (
+	"zxi_go/zxi/models"
+)
 
 type ShowUploadTable struct {
-	*models.Upload
+	Id int
+	Uploading int
+	IsComplete int
+	LocalPath string
 	Name string
 	Size string
 	Progress   float64
 }
 
 type ShowUploadInfo struct {
-	*models.Upload
+	Id         int
+	LocalPath  string
+	BlockSize  int
+	Uploading  int
+	IsComplete int
+	FileId     int
+	UserInfoId int
 	BlockList []models.UploadBlock
 }
