@@ -2,6 +2,7 @@ package upload
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	. "zxi_go/core"
@@ -73,6 +74,17 @@ func (h *Handlers) CreateOrIgnoreUpload(hash string, path string, userId int) in
 	return uploadMate.Id
 }
 
+func (h *Handlers) CreateOrIgnorePath(path string) error {
+	_, err := os.Stat(path)
+	if err == nil {
+		return nil
+	}
+	if os.IsNotExist(err) {
+		return os.MkdirAll(path, 0777)
+	}
+	return err
+}
+
 func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUploadTable, int) {
 	var count int
 	var uploadList []models.Upload
@@ -129,6 +141,32 @@ func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUploadTa
 	return result, count
 }
 
+func (h *Handlers) GetProgress(uploadId int) float64 {
+	var progress float64
+	var totalNum, completeNum int
+	var blockList []models.UploadBlock
+
+	LocalDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		UploadId: uploadId,
+	}).Find(&blockList)
+	for _, blockMate := range blockList {
+		if blockMate.IsComplete == 1 {
+			completeNum++
+		}
+		totalNum++
+	}
+	if totalNum != 0 {
+		progress, _ = strconv.ParseFloat(
+			fmt.Sprintf("%.2f", float64(completeNum)/float64(totalNum)*100),
+			64,
+		)
+	} else {
+		progress = 0
+	}
+	return progress
+}
+
 func (h *Handlers) GetUploadInfo(uploadId int) ShowUploadInfo {
 	var uploadMate models.Upload
 	var uploadBlockList []models.UploadBlock
@@ -148,7 +186,7 @@ func (h *Handlers) GetUploadInfo(uploadId int) ShowUploadInfo {
 		IsComplete: uploadMate.IsComplete,
 		FileId:     uploadMate.FileId,
 		UserInfoId: uploadMate.UserInfoId,
-		BlockList: uploadBlockList,
+		BlockList:  uploadBlockList,
 	}
 }
 
@@ -166,7 +204,7 @@ func (h *Handlers) GetFileInfoByUploadId(uploadId int) models.File {
 	return fileMate
 }
 
-func (h *Handlers)GetUploadBlockInfo(blockId int) models.UploadBlock {
+func (h *Handlers) GetUploadBlockInfo(blockId int) models.UploadBlock {
 	var uploadBlockMate models.UploadBlock
 	LocalDB.Where(&models.UploadBlock{
 		Recycled: "N",
@@ -175,7 +213,7 @@ func (h *Handlers)GetUploadBlockInfo(blockId int) models.UploadBlock {
 	return uploadBlockMate
 }
 
-func (h *Handlers) SetUploadIsComplete(uploadId int, state int) {
+func (h *Handlers) UpdateFileComplete(uploadId int, state int) {
 	var uploadMate models.Upload
 	var fileMate models.File
 	LocalDB.Where(&models.Upload{
@@ -192,7 +230,7 @@ func (h *Handlers) SetUploadIsComplete(uploadId int, state int) {
 	LocalDB.Save(&fileMate)
 }
 
-func (h *Handlers) SetBlockIsComplete(blockId int, state int) {
+func (h *Handlers) UpdateBlockComplete(blockId int, state int) {
 	var uploadBlockMate models.UploadBlock
 	LocalDB.Where(&models.UploadBlock{
 		Recycled: "N",
@@ -201,6 +239,18 @@ func (h *Handlers) SetBlockIsComplete(blockId int, state int) {
 	uploadBlockMate.IsComplete = state
 	LocalDB.Save(&uploadBlockMate)
 }
+
+func (h *Handlers) UpdateUploading(uploadId int, state int) {
+	var uploadMate models.Upload
+	LocalDB.Where(&models.Upload{
+		Recycled: "N",
+		Id:       uploadId,
+	}).First(&uploadMate)
+	uploadMate.Uploading = state
+	LocalDB.Save(&uploadMate)
+}
+
+
 
 func GetFileByPath(path string) string {
 	path = strings.Replace(path, `\`, `/`, -1)

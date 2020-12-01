@@ -5,12 +5,12 @@ import (
 )
 
 type ShowUploadTable struct {
-	Id int
-	Uploading int
+	Id         int
+	Uploading  int
 	IsComplete int
-	LocalPath string
-	Name string
-	Size string
+	LocalPath  string
+	Name       string
+	Size       string
 	Progress   float64
 }
 
@@ -22,5 +22,5 @@ type ShowUploadInfo struct {
 	IsComplete int
 	FileId     int
 	UserInfoId int
-	BlockList []models.UploadBlock
+	BlockList  []models.UploadBlock
 }
