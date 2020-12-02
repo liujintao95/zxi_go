@@ -5,9 +5,9 @@ import (
 	"os"
 )
 
-var Logging = logrus.New()
 
-func LogInit() {
+func LogInit() *logrus.Logger {
+	Logging := logrus.New()
 	file, err := os.OpenFile("logs/log.txt", os.O_CREATE|os.O_WRONLY, 0666)
 	if err == nil {
 		Logging.SetOutput(file)
@@ -17,4 +17,5 @@ func LogInit() {
 	}
 
 	Logging.Formatter = &logrus.TextFormatter{}
+	return Logging
 }

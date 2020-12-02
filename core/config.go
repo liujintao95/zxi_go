@@ -1,7 +1,5 @@
 package core
 
-const SECRET_KEY = "XHSOI*Y9dfs9cshd9"
-
 var MySqlConf = map[string]string{
 	"user":     "root",
 	"pwd":      "123456",

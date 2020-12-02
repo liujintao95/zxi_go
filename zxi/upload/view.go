@@ -2,6 +2,7 @@ package upload
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"path"
 	"strconv"
@@ -10,115 +11,122 @@ import (
 )
 
 type View struct {
+	logging *logrus.Logger
+	handler *Handler
 }
 
-var view = View{}
+func NewView() *View {
+	return &View{
+		logging: core.LogInit(),
+		handler: NewHandler(),
+	}
+}
 
-func (v *View) ShowUploads(g *gin.Context) {
-	userInter, _ := g.Get("userInfo")
+func (v *View) ShowUploads(c *gin.Context) {
+	userInter, _ := c.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
-	pageStr := g.Query("page")
-	sizeStr := g.Query("size")
+	pageStr := c.Query("page")
+	sizeStr := c.Query("size")
 	page, err := strconv.Atoi(pageStr)
 	size, err := strconv.Atoi(sizeStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	uploadList, count := handlers.GetUploadList(userMate.Id, page, size)
-	g.JSON(http.StatusOK, gin.H{
+	uploadList, count := v.handler.GetUploadList(userMate.Id, page, size)
+	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"upload_list": uploadList,
 		"count":       count,
 	})
 }
 
-func (v *View) ShowUploadInfo(g *gin.Context) {
-	uploadIdStr := g.Query("id")
+func (v *View) ShowUploadInfo(c *gin.Context) {
+	uploadIdStr := c.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	g.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
-		"upload_info": handlers.GetUploadInfo(uploadId),
+		"upload_info": v.handler.GetUploadInfo(uploadId),
 	})
 }
 
-func (v *View) ShowProgress(g *gin.Context) {
-	uploadIdStr := g.Query("id")
+func (v *View) ShowProgress(c *gin.Context) {
+	uploadIdStr := c.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	g.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
-		"progress": handlers.GetProgress(uploadId),
+		"progress": v.handler.GetProgress(uploadId),
 	})
 }
 
-func (v *View) UploadFile(g *gin.Context) {
-	uploadIdStr := g.PostForm("upload_id")
-	fileStr := g.PostForm("file")
+func (v *View) UploadFile(c *gin.Context) {
+	uploadIdStr := c.PostForm("upload_id")
+	fileStr := c.PostForm("file")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	fileMate := handlers.GetFileInfoByUploadId(uploadId)
+	fileMate := v.handler.GetFileInfoByUploadId(uploadId)
 	savePath := path.Join("files", fileMate.Hash)
-	err = handlers.SaveFile([]byte(fileStr), savePath)
-	core.CustomError(g, err, core.ErrSaveFile)
-	handlers.UpdateFileComplete(uploadId, 1)
+	err = v.handler.SaveFile([]byte(fileStr), savePath)
+	core.CustomError(c, err, core.ErrSaveFile)
+	v.handler.UpdateFileComplete(uploadId, 1)
 
-	g.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func (v *View) UploadBlock(g *gin.Context) {
-	uploadIdStr := g.PostForm("upload_id")
-	blockIdStr := g.PostForm("block_id")
-	blockStr := g.PostForm("block")
+func (v *View) UploadBlock(c *gin.Context) {
+	uploadIdStr := c.PostForm("upload_id")
+	blockIdStr := c.PostForm("block_id")
+	blockStr := c.PostForm("block")
 	uploadId, err := strconv.Atoi(uploadIdStr)
 	blockId, err := strconv.Atoi(blockIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	fileMate := handlers.GetFileInfoByUploadId(uploadId)
-	uploadBlockMate := handlers.GetUploadBlockInfo(blockId)
-	err = handlers.CreateOrIgnorePath(path.Join("blocks", fileMate.Hash))
-	core.CustomError(g, err, core.ErrCreatePath)
+	fileMate := v.handler.GetFileInfoByUploadId(uploadId)
+	uploadBlockMate := v.handler.GetUploadBlockInfo(blockId)
+	err = v.handler.CreateOrIgnorePath(path.Join("blocks", fileMate.Hash))
+	core.CustomError(c, err, core.ErrCreatePath)
 	savePath := path.Join(
 		"blocks", fileMate.Hash, strconv.Itoa(uploadBlockMate.Offset))
-	err = handlers.SaveFile([]byte(blockStr), savePath)
-	core.CustomError(g, err, core.ErrSaveFile)
-	handlers.UpdateBlockComplete(blockId, 1)
+	err = v.handler.SaveFile([]byte(blockStr), savePath)
+	core.CustomError(c, err, core.ErrSaveFile)
+	v.handler.UpdateBlockComplete(blockId, 1)
 
-	g.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func (v *View) PauseUpload(g *gin.Context)  {
-	uploadIdStr := g.PostForm("upload_id")
+func (v *View) PauseUpload(c *gin.Context)  {
+	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
-	handlers.UpdateUploading(uploadId, 0)
-	g.JSON(http.StatusOK, gin.H{
+	core.CustomError(c, err, core.ErrBadReq)
+	v.handler.UpdateUploading(uploadId, 0)
+	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"upload_id": uploadId,
 	})
 }
 
-func (v *View) StartUpload(g *gin.Context)  {
-	uploadIdStr := g.PostForm("upload_id")
+func (v *View) StartUpload(c *gin.Context)  {
+	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	handlers.UpdateUploading(uploadId, 1)
-	g.JSON(http.StatusOK, gin.H{
+	v.handler.UpdateUploading(uploadId, 1)
+	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"upload_id": uploadId,
 	})
 }
 
-func (v *View) CancelUpload(g *gin.Context)  {
-	uploadIdStr := g.PostForm("upload_id")
+func (v *View) CancelUpload(c *gin.Context)  {
+	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
-	handlers.DeleteUpload(uploadId)
-	g.JSON(http.StatusOK, gin.H{
+	v.handler.DeleteUpload(uploadId)
+	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"upload_id": uploadId,
 	})

@@ -6,6 +6,7 @@ import (
 )
 
 func UrlMap(router *gin.Engine) {
+	view := NewView()
 	authorized := router.Group("/zxi/auth", middleware.LoginRequired)
 	authorized.GET("/upload/show", view.ShowUploads)
 	authorized.GET("/upload/info", view.ShowUploadInfo)

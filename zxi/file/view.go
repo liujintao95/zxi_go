@@ -2,6 +2,7 @@ package file
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"zxi_go/core"
@@ -10,44 +11,52 @@ import (
 )
 
 type View struct {
+	logging *logrus.Logger
+	handler *Handler
+	uploadHandlers *upload.Handler
 }
 
-var view = View{}
-var uploadHandlers = upload.Handlers{}
+func NewView() *View {
+	return &View{
+		logging: core.LogInit(),
+		handler: NewHandler(),
+		uploadHandlers: upload.NewHandler(),
+	}
+}
 
-func (v *View) ShowFiles(g *gin.Context) {
-	filePath := g.Query("path")
-	userInter, _ := g.Get("userInfo")
+func (v *View) ShowFiles(c *gin.Context) {
+	filePath := c.Query("path")
+	userInter, _ := c.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 
-	g.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"success":   true,
-		"dir_list":  handlers.GetDirList(filePath, userMate.Id),
-		"file_list": handlers.GetFileList(filePath, userMate.Id),
+		"dir_list":  v.handler.GetDirList(filePath, userMate.Id),
+		"file_list": v.handler.GetFileList(filePath, userMate.Id),
 	})
 }
 
-func (v *View) SaveFileInfo(g *gin.Context) {
-	sizeStr := g.PostForm("size")
-	hash := g.PostForm("hash")
-	name := g.PostForm("name")
-	path := g.PostForm("path")
-	root := g.PostForm("root")
-	userInter, _ := g.Get("userInfo")
+func (v *View) SaveFileInfo(c *gin.Context) {
+	sizeStr := c.PostForm("size")
+	hash := c.PostForm("hash")
+	name := c.PostForm("name")
+	path := c.PostForm("path")
+	root := c.PostForm("root")
+	userInter, _ := c.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 	size, err := strconv.Atoi(sizeStr)
-	core.CustomError(g, err, core.ErrBadReq)
+	core.CustomError(c, err, core.ErrBadReq)
 
 	var dirPath string
 	if root != ""{
-		fileRelativePath := handlers.AbsolutePathToRelativePath(path, root)
-		dirPath, _ = handlers.PathSplit(fileRelativePath)
-		handlers.CreatePath(dirPath, userMate.Id)
+		fileRelativePath := v.handler.AbsolutePathToRelativePath(path, root)
+		dirPath, _ = v.handler.PathSplit(fileRelativePath)
+		v.handler.CreatePath(dirPath, userMate.Id)
 	}
-	handlers.CreateOrIgnoreFile(hash, size)
-	lastId := uploadHandlers.CreateOrIgnoreUpload(hash, path, userMate.Id)
-	uploadHandlers.CreateOrIgnoreUploadBlock(lastId, size)
-	handlers.CreateUserFile(hash, name, userMate.Id, dirPath)
+	v.handler.CreateOrIgnoreFile(hash, size)
+	lastId := v.uploadHandlers.CreateOrIgnoreUpload(hash, path, userMate.Id)
+	v.uploadHandlers.CreateOrIgnoreUploadBlock(lastId, size)
+	v.handler.CreateUserFile(hash, name, userMate.Id, dirPath)
 
-	g.JSON(http.StatusOK, gin.H{"success": true})
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }

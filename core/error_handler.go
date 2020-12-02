@@ -16,10 +16,9 @@ const (
 	ErrCreatePath = 2002
 )
 
-func CustomError (g *gin.Context, err error, errCode int){
+func CustomError (c *gin.Context, err error, errCode int){
 	if err != nil{
-		Logging.Error(err)
-		g.JSON(http.StatusBadRequest, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"success":  false,
 			"err_code": errCode,
 			"err_msg":  err.Error(),

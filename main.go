@@ -8,9 +8,6 @@ import (
 )
 
 func main() {
-	core.LogInit()
-	core.MySqlInit()
-
 	router := gin.Default()
 	router.Use(core.Cors())
 	file.UrlMap(router)
