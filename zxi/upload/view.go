@@ -1,7 +1,6 @@
 package upload
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"path"
@@ -22,15 +21,7 @@ func (v *View) ShowUploads(g *gin.Context) {
 	sizeStr := g.Query("size")
 	page, err := strconv.Atoi(pageStr)
 	size, err := strconv.Atoi(sizeStr)
-	if err != nil {
-		fmt.Println(err)
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
 
 	uploadList, count := handlers.GetUploadList(userMate.Id, page, size)
 	g.JSON(http.StatusOK, gin.H{
@@ -43,14 +34,7 @@ func (v *View) ShowUploads(g *gin.Context) {
 func (v *View) ShowUploadInfo(g *gin.Context) {
 	uploadIdStr := g.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	if err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
 
 	g.JSON(http.StatusOK, gin.H{
 		"success":     true,
@@ -61,14 +45,8 @@ func (v *View) ShowUploadInfo(g *gin.Context) {
 func (v *View) ShowProgress(g *gin.Context) {
 	uploadIdStr := g.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	if err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
+
 	g.JSON(http.StatusOK, gin.H{
 		"success":  true,
 		"progress": handlers.GetProgress(uploadId),
@@ -76,29 +54,15 @@ func (v *View) ShowProgress(g *gin.Context) {
 }
 
 func (v *View) UploadFile(g *gin.Context) {
-	uploadIdStr := g.PostForm("id")
-	file, err := g.FormFile("file")
+	uploadIdStr := g.PostForm("upload_id")
+	fileStr := g.PostForm("file")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	if err != nil {
-		fmt.Println(err)
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
+
 	fileMate := handlers.GetFileInfoByUploadId(uploadId)
-	savePath := path.Join("files", fileMate.Hash+file.Filename)
-	err = g.SaveUploadedFile(file, savePath)
-	if err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_SAVE_FILE,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	savePath := path.Join("files", fileMate.Hash)
+	err = handlers.SaveFile([]byte(fileStr), savePath)
+	core.CustomError(g, err, core.ErrSaveFile)
 	handlers.UpdateFileComplete(uploadId, 1)
 
 	g.JSON(http.StatusOK, gin.H{"success": true})
@@ -107,41 +71,19 @@ func (v *View) UploadFile(g *gin.Context) {
 func (v *View) UploadBlock(g *gin.Context) {
 	uploadIdStr := g.PostForm("upload_id")
 	blockIdStr := g.PostForm("block_id")
-	block, err := g.FormFile("block")
+	blockStr := g.PostForm("block")
 	uploadId, err := strconv.Atoi(uploadIdStr)
 	blockId, err := strconv.Atoi(blockIdStr)
-	if err != nil {
-		fmt.Println(err)
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
+
 	fileMate := handlers.GetFileInfoByUploadId(uploadId)
 	uploadBlockMate := handlers.GetUploadBlockInfo(blockId)
-
 	err = handlers.CreateOrIgnorePath(path.Join("blocks", fileMate.Hash))
-	if err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_SAVE_FILE,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrCreatePath)
 	savePath := path.Join(
 		"blocks", fileMate.Hash, strconv.Itoa(uploadBlockMate.Offset))
-	err = g.SaveUploadedFile(block, savePath)
-	if err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_SAVE_FILE,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	err = handlers.SaveFile([]byte(blockStr), savePath)
+	core.CustomError(g, err, core.ErrSaveFile)
 	handlers.UpdateBlockComplete(blockId, 1)
 
 	g.JSON(http.StatusOK, gin.H{"success": true})
@@ -150,15 +92,7 @@ func (v *View) UploadBlock(g *gin.Context) {
 func (v *View) PauseUpload(g *gin.Context)  {
 	uploadIdStr := g.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	if err != nil {
-		fmt.Println(err)
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
 	handlers.UpdateUploading(uploadId, 0)
 	g.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -169,16 +103,21 @@ func (v *View) PauseUpload(g *gin.Context)  {
 func (v *View) StartUpload(g *gin.Context)  {
 	uploadIdStr := g.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	if err != nil {
-		fmt.Println(err)
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	core.CustomError(g, err, core.ErrBadReq)
+
 	handlers.UpdateUploading(uploadId, 1)
+	g.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"upload_id": uploadId,
+	})
+}
+
+func (v *View) CancelUpload(g *gin.Context)  {
+	uploadIdStr := g.PostForm("upload_id")
+	uploadId, err := strconv.Atoi(uploadIdStr)
+	core.CustomError(g, err, core.ErrBadReq)
+
+	handlers.DeleteUpload(uploadId)
 	g.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"upload_id": uploadId,

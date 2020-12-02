@@ -10,7 +10,8 @@ type ShowUploadTable struct {
 	IsComplete int
 	LocalPath  string
 	Name       string
-	Size       string
+	SizeFmt       string
+	Size       int
 	Progress   float64
 }
 

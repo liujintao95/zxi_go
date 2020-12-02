@@ -3,6 +3,7 @@ package file
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"zxi_go/core"
 	"zxi_go/zxi/models"
 	"zxi_go/zxi/upload"
@@ -27,49 +28,26 @@ func (v *View) ShowFiles(g *gin.Context) {
 }
 
 func (v *View) SaveFileInfo(g *gin.Context) {
-	var file FileInfo
+	sizeStr := g.PostForm("size")
+	hash := g.PostForm("hash")
+	name := g.PostForm("name")
+	path := g.PostForm("path")
+	root := g.PostForm("root")
 	userInter, _ := g.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
-	if err := g.Bind(&file); err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
+	size, err := strconv.Atoi(sizeStr)
+	core.CustomError(g, err, core.ErrBadReq)
 
-	handlers.CreateOrIgnoreFile(file.Hash, file.Size)
-	lastId := uploadHandlers.CreateOrIgnoreUpload(file.Hash, file.Path, userMate.Id)
-	uploadHandlers.CreateOrIgnoreUploadBlock(lastId, file.Size)
-	handlers.CreateUserFile(file.Hash, file.Name, userMate.Id, "")
-
-	g.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-func (v *View) SaveFilesInfo(g *gin.Context) {
-	var postParser DirInfo
-	userInter, _ := g.Get("userInfo")
-	userMate := userInter.(models.UserInfo)
-	if err := g.Bind(&postParser); err != nil {
-		g.JSON(http.StatusBadRequest, gin.H{
-			"success":  false,
-			"err_code": core.ERR_BAD_REQ,
-			"err_msg":  err.Error(),
-		})
-		return
-	}
-
-	for _, file := range postParser.Files {
-		fileRelativePath := handlers.AbsolutePathToRelativePath(file.Path, postParser.Root)
-		dirPath, _ := handlers.PathSplit(fileRelativePath)
-
+	var dirPath string
+	if root != ""{
+		fileRelativePath := handlers.AbsolutePathToRelativePath(path, root)
+		dirPath, _ = handlers.PathSplit(fileRelativePath)
 		handlers.CreatePath(dirPath, userMate.Id)
-		handlers.CreateOrIgnoreFile(file.Hash, file.Size)
-		lastId := uploadHandlers.CreateOrIgnoreUpload(file.Hash, file.Path, userMate.Id)
-		uploadHandlers.CreateOrIgnoreUploadBlock(lastId, file.Size)
-		handlers.CreateUserFile(file.Hash, file.Name, userMate.Id, dirPath)
 	}
+	handlers.CreateOrIgnoreFile(hash, size)
+	lastId := uploadHandlers.CreateOrIgnoreUpload(hash, path, userMate.Id)
+	uploadHandlers.CreateOrIgnoreUploadBlock(lastId, size)
+	handlers.CreateUserFile(hash, name, userMate.Id, dirPath)
 
 	g.JSON(http.StatusOK, gin.H{"success": true})
 }

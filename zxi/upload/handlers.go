@@ -56,6 +56,7 @@ func (h *Handlers) CreateOrIgnoreUpload(hash string, path string, userId int) in
 	LocalDB.Where(&models.Upload{
 		Recycled: "N",
 		FileId:   fileMate.Id,
+		UserInfoId: userId,
 	}).First(&uploadMate)
 	if uploadMate.Id == 0 {
 		uploadMate.FileId = fileMate.Id
@@ -70,6 +71,18 @@ func (h *Handlers) CreateOrIgnoreUpload(hash string, path string, userId int) in
 			uploadMate.IsComplete = 0
 		}
 		LocalDB.Create(&uploadMate)
+	} else if uploadMate.Recycled == "Y"{
+		uploadMate.Recycled = "N"
+		uploadMate.LocalPath = path
+		uploadMate.BlockSize = BLOCK_SIZE
+		if fileMate.IsComplete == 1 {
+			uploadMate.Uploading = 0
+			uploadMate.IsComplete = 1
+		} else {
+			uploadMate.Uploading = 1
+			uploadMate.IsComplete = 0
+		}
+		LocalDB.Save(uploadMate)
 	}
 	return uploadMate.Id
 }
@@ -134,7 +147,8 @@ func (h *Handlers) GetUploadList(userId int, page int, size int) ([]ShowUploadTa
 			IsComplete: uploadInfo.IsComplete,
 			LocalPath:  uploadInfo.LocalPath,
 			Name:       GetFileByPath(uploadInfo.LocalPath),
-			Size:       StrSize(fileMate.Size),
+			SizeFmt:       StrSize(fileMate.Size),
+			Size:       fileMate.Size,
 			Progress:   progress,
 		})
 	}
@@ -248,6 +262,28 @@ func (h *Handlers) UpdateUploading(uploadId int, state int) {
 	}).First(&uploadMate)
 	uploadMate.Uploading = state
 	LocalDB.Save(&uploadMate)
+}
+
+func (h *Handlers) DeleteUpload(uploadId int) {
+	var uploadMate models.Upload
+	LocalDB.Where(&models.Upload{
+		Recycled: "N",
+		Id:       uploadId,
+	}).First(&uploadMate)
+	uploadMate.Recycled = "Y"
+	LocalDB.Save(uploadMate)
+
+	LocalDB.Where(&models.UploadBlock{
+		UploadId: uploadId,
+	}).Delete(models.UploadBlock{})
+}
+
+func (h *Handlers) SaveFile(data []byte, path string) error {
+	fo, err := os.Create(path)
+	if err == nil {
+		_, err = fo.Write(data)
+	}
+	return err
 }
 
 

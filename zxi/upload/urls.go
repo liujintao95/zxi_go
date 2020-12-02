@@ -14,4 +14,5 @@ func UrlMap(router *gin.Engine) {
 	authorized.POST("/upload/block", view.UploadBlock)
 	authorized.POST("/upload/pause", view.PauseUpload)
 	authorized.POST("/upload/start", view.StartUpload)
+	authorized.POST("/upload/cancel", view.CancelUpload)
 }
