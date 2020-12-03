@@ -5,9 +5,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
-	"zxi_go/core/errHandlers"
+	"zxi_go/core/errState"
 	"zxi_go/core/logger"
-	"zxi_go/zxi/models"
+	"zxi_go/core/models"
+	"zxi_go/utils/customError"
 	"zxi_go/zxi/upload"
 )
 
@@ -23,7 +24,7 @@ func NewView() *View {
 		logger:         logger.LogInit(),
 		handler:        NewHandler(),
 		uploadHandlers: upload.NewHandler(),
-		errCheck:       errHandlers.CustomError,
+		errCheck:       customError.ErrorCheck,
 	}
 }
 
@@ -48,7 +49,7 @@ func (v *View) SaveFileInfo(c *gin.Context) {
 	userInter, _ := c.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 	size, err := strconv.Atoi(sizeStr)
-	v.errCheck(c, err, errHandlers.ErrBadReq)
+	v.errCheck(c, err, errState.ErrBadReq)
 
 	var dirPath string
 	if root != "" {

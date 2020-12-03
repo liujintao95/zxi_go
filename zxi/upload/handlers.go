@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"zxi_go/core/database"
-	"zxi_go/zxi/models"
+	"zxi_go/core/models"
 )
 
 type Handler struct {

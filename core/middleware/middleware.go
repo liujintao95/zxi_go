@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"zxi_go/zxi/models"
+	"zxi_go/core/models"
 )
 
 func Cors() gin.HandlerFunc {

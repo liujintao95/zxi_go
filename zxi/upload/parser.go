@@ -1,7 +1,7 @@
 package upload
 
 import (
-	"zxi_go/zxi/models"
+	"zxi_go/core/models"
 )
 
 type ShowUploadTable struct {
