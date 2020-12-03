@@ -1,10 +1,11 @@
-package core
+package middleware
 
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"zxi_go/zxi/models"
 )
 
 func Cors() gin.HandlerFunc {
@@ -38,4 +39,15 @@ func Cors() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func LoginRequired(g *gin.Context) {
+	userMate := models.UserInfo{}
+	userMate.Id = 1
+	userMate.Name = "北风忆夕"
+	userMate.User = "ljt"
+	userMate.Pwd = "dgewgdsfw^&(^r1426"
+
+	g.Set("userInfo", userMate)
+	g.Next()
 }

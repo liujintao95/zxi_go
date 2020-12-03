@@ -5,23 +5,15 @@ import (
 )
 
 type ShowUploadTable struct {
-	Id         int
-	Uploading  int
-	IsComplete int
-	LocalPath  string
-	Name       string
-	SizeFmt       string
-	Size       int
-	Progress   float64
+	Id         int     `json:"id"`
+	Uploading  int     `json:"uploading"`
+	IsComplete int     `json:"is_complete"`
+	LocalPath  string  `json:"local_path"`
+	Size       int     `json:"size"`
+	Progress   float64 `json:"progress"`
 }
 
 type ShowUploadInfo struct {
-	Id         int
-	LocalPath  string
-	BlockSize  int
-	Uploading  int
-	IsComplete int
-	FileId     int
-	UserInfoId int
-	BlockList  []models.UploadBlock
+	Upload    models.Upload        `json:"upload_map"`
+	BlockList []models.UploadBlock `json:"block_list"`
 }

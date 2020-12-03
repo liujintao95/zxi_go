@@ -4,7 +4,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"path/filepath"
 	"strings"
-	. "zxi_go/core"
+	"zxi_go/core/database"
 	"zxi_go/zxi/models"
 )
 
@@ -14,7 +14,7 @@ type Handler struct {
 
 func NewHandler() *Handler {
 	return &Handler{
-		localDB: MySqlInit(),
+		localDB: database.MySqlInit(),
 	}
 }
 

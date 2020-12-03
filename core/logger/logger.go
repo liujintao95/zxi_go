@@ -1,10 +1,9 @@
-package core
+package logger
 
 import (
 	"github.com/sirupsen/logrus"
 	"os"
 )
-
 
 func LogInit() *logrus.Logger {
 	Logging := logrus.New()

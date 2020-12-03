@@ -2,81 +2,14 @@ package models
 
 import "time"
 
-//type UserInfo struct {
-//	Id   int64  `db:"id"`
-//	Name string `db:"name"`
-//	User string `db:"user"`
-//	Pwd  string `db:"pwd"`
-//}
-//
-//type Directory struct {
-//	Id       int64    `db:"id"`
-//	Name     string   `db:"name"`
-//	Path     string   `db:"path"`
-//	UserInfo UserInfo `db:"user_id"`
-//	IsKey    int      `db:"is_key"`
-//}
-//
-//type File struct {
-//	Id         int64  `db:"id"`
-//	Hash       string `db:"hash"`
-//	Path       string `db:"path"`
-//	Size       int64  `db:"size"`
-//	IsComplete int    `db:"is_complete"`
-//}
-//
-//type UserFile struct {
-//	Id        int64     `db:"id"`
-//	Name      string    `db:"name"`
-//	File      File      `db:"file_id"`
-//	Directory Directory `db:"dir_id"`
-//	UserInfo  UserInfo  `db:"user_id"`
-//	IsKey     int       `db:"is_key"`
-//}
-//
-//type Upload struct {
-//	Id         int64    `db:"id"`
-//	File       File     `db:"file_id"`
-//	UserInfo   UserInfo `db:"user_id"`
-//	LocalPath  string   `db:"local_path"`
-//	BlockSize  int      `db:"block_size"`
-//	Uploading  int      `db:"uploading"`
-//	IsComplete int      `db:"is_complete"`
-//}
-//
-//type UploadBlock struct {
-//	Id         int64  `db:"id"`
-//	Upload     Upload `db:"upload_id"`
-//	Offset     int64  `db:"Offset"`
-//	Size       int64  `db:"size"`
-//	IsComplete int    `db:"is_complete"`
-//}
-//
-//type Download struct {
-//	Id         int64    `db:"id"`
-//	File       File     `db:"file_id"`
-//	UserInfo   UserInfo `db:"user_id"`
-//	LocalPath  string   `db:"local_path"`
-//	BlockSize  int      `db:"block_size"`
-//	IsComplete int      `db:"is_complete"`
-//}
-//
-//type DownloadBlock struct {
-//	Id         int64  `db:"id"`
-//	Download   Upload `db:"upload_id"`
-//	Offset     int64  `db:"Offset"`
-//	Size       int64  `db:"size"`
-//	IsComplete int    `db:"is_complete"`
-//}
-
 type UserInfo struct {
-	Id        int       `gorm:"primary_key"`
-	Name      string    `gorm:"type:varchar(255);not null"`
-	User      string    `gorm:"type:varchar(255);not null"`
-	Pwd       string    `gorm:"type:varchar(255);not null"`
-	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt time.Time `gorm:"column:utime"`
-	CreatedAt time.Time `gorm:"column:ctime"`
+	Id        int       `gorm:"primary_key" json:"id"`
+	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
+	User      string    `gorm:"type:varchar(255);not null" json:"user"`
+	Pwd       string    `gorm:"type:varchar(255);not null" json:"pwd"`
+	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt time.Time `gorm:"column:ctime" json:"ctime"`
 }
 
 func (UserInfo) TableName() string {
@@ -84,16 +17,16 @@ func (UserInfo) TableName() string {
 }
 
 type Directory struct {
-	Id        int       `gorm:"primary_key"`
-	Name      string    `gorm:"type:varchar(255);not null"`
-	Path      string    `gorm:"type:varchar(255);not null"`
-	IsKey     int       `gorm:"type:int(255);not null"`
-	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt time.Time `gorm:"column:utime"`
-	CreatedAt time.Time `gorm:"column:ctime"`
+	Id        int       `gorm:"primary_key" json:"id"`
+	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
+	Path      string    `gorm:"type:varchar(255);not null" json:"path"`
+	IsKey     int       `gorm:"type:int(255);not null" json:"is_key"`
+	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt time.Time `gorm:"column:ctime" json:"ctime"`
 
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
-	UserInfoId int      `gorm:"column:user_id"`
+	UserInfoId int      `gorm:"column:user_id" json:"user_id"`
 }
 
 func (Directory) TableName() string {
@@ -101,14 +34,14 @@ func (Directory) TableName() string {
 }
 
 type File struct {
-	Id         int       `gorm:"primary_key"`
-	Hash       string    `gorm:"type:varchar(255);not null"`
-	Path       string    `gorm:"type:varchar(255);not null"`
-	Size       int       `gorm:"type:int(255);not null"`
-	IsComplete int       `gorm:"type:int(255);not null"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt  time.Time `gorm:"column:utime"`
-	CreatedAt  time.Time `gorm:"column:ctime"`
+	Id         int       `gorm:"primary_key" json:"id"`
+	Hash       string    `gorm:"type:varchar(255);not null" json:"hash"`
+	Path       string    `gorm:"type:varchar(255);not null" json:"path"`
+	Size       int       `gorm:"type:int(255);not null" json:"size"`
+	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 }
 
 func (File) TableName() string {
@@ -116,19 +49,19 @@ func (File) TableName() string {
 }
 
 type UserFile struct {
-	Id        int       `gorm:"primary_key"`
-	Name      string    `gorm:"type:varchar(255);not null"`
-	IsKey     int       `gorm:"type:int(255);not null"`
-	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt time.Time `gorm:"column:utime"`
-	CreatedAt time.Time `gorm:"column:ctime"`
+	Id        int       `gorm:"primary_key" json:"id"`
+	Name      string    `gorm:"type:varchar(255);not null" json:"name"`
+	IsKey     int       `gorm:"type:int(255);not null" json:"is_key"`
+	Recycled  string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt time.Time `gorm:"column:ctime" json:"ctime"`
 
 	File        File      `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	Directory   Directory `gorm:"ForeignKey:DirectoryId;AssociationForeignKey:Id"`
 	UserInfo    UserInfo  `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
-	FileId      int       `gorm:"column:file_id"`
-	DirectoryId int       `gorm:"column:dir_id"`
-	UserInfoId  int       `gorm:"column:user_id"`
+	FileId      int       `gorm:"column:file_id" json:"file_id"`
+	DirectoryId int       `gorm:"column:dir_id" json:"dir_id"`
+	UserInfoId  int       `gorm:"column:user_id" json:"user_id"`
 }
 
 func (UserFile) TableName() string {
@@ -136,19 +69,19 @@ func (UserFile) TableName() string {
 }
 
 type Upload struct {
-	Id         int       `gorm:"primary_key"`
-	LocalPath  string    `gorm:"type:varchar(255);not null"`
-	BlockSize  int       `gorm:"type:int(255);not null"`
-	Uploading  int       `gorm:"type:int(255);not null"`
-	IsComplete int       `gorm:"type:int(255);not null"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt  time.Time `gorm:"column:utime"`
-	CreatedAt  time.Time `gorm:"column:ctime"`
+	Id         int       `gorm:"primary_key" json:"id"`
+	LocalPath  string    `gorm:"type:varchar(255);not null" json:"local_path"`
+	BlockSize  int       `gorm:"type:int(255);not null" json:"block_size"`
+	Uploading  int       `gorm:"type:int(255);not null" json:"uploading"`
+	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 
 	File       File     `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
-	FileId     int      `gorm:"column:file_id"`
-	UserInfoId int      `gorm:"column:user_id"`
+	FileId     int      `gorm:"column:file_id" json:"file_id"`
+	UserInfoId int      `gorm:"column:user_id" json:"user_id"`
 }
 
 func (Upload) TableName() string {
@@ -156,16 +89,16 @@ func (Upload) TableName() string {
 }
 
 type UploadBlock struct {
-	Id         int       `gorm:"primary_key"`
-	Offset     int       `gorm:"type:int(255);not null"`
-	Size       int       `gorm:"type:varchar(255);not null"`
-	IsComplete int       `gorm:"type:int(255);not null"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt  time.Time `gorm:"column:utime"`
-	CreatedAt  time.Time `gorm:"column:ctime"`
+	Id         int       `gorm:"primary_key" json:"id"`
+	Offset     int       `gorm:"type:int(255);not null" json:"offset"`
+	Size       int       `gorm:"type:varchar(255);not null" json:"size"`
+	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 
 	Upload   Upload `gorm:"ForeignKey:UploadId;AssociationForeignKey:Id"`
-	UploadId int    `gorm:"column:upload_id"`
+	UploadId int    `gorm:"column:upload_id" json:"upload_id"`
 }
 
 func (UploadBlock) TableName() string {
@@ -173,18 +106,18 @@ func (UploadBlock) TableName() string {
 }
 
 type Download struct {
-	Id         int       `gorm:"primary_key"`
-	LocalPath  string    `gorm:"type:varchar(255);not null"`
-	BlockSize  int       `gorm:"type:int(255);not null"`
-	IsComplete int       `gorm:"type:int(255);not null"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt  time.Time `gorm:"column:utime"`
-	CreatedAt  time.Time `gorm:"column:ctime"`
+	Id         int       `gorm:"primary_key" json:"id"`
+	LocalPath  string    `gorm:"type:varchar(255);not null" json:"local_path"`
+	BlockSize  int       `gorm:"type:int(255);not null" json:"block_size"`
+	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 
 	File       File     `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
-	FileId     int      `gorm:"column:file_id"`
-	UserInfoId int      `gorm:"column:user_id"`
+	FileId     int      `gorm:"column:file_id" json:"file_id"`
+	UserInfoId int      `gorm:"column:user_id" json:"user_id"`
 }
 
 func (Download) TableName() string {
@@ -192,16 +125,16 @@ func (Download) TableName() string {
 }
 
 type DownloadBlock struct {
-	Id         int       `gorm:"primary_key"`
-	Offset     int       `gorm:"type:int(255);not null"`
-	Size       int       `gorm:"type:varchar(255);not null"`
-	IsComplete int       `gorm:"type:int(255);not null"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'"`
-	UpdatedAt  time.Time `gorm:"column:utime"`
-	CreatedAt  time.Time `gorm:"column:ctime"`
+	Id         int       `gorm:"primary_key" json:"id"`
+	Offset     int       `gorm:"type:int(255);not null" json:"offset"`
+	Size       int       `gorm:"type:varchar(255);not null" json:"size"`
+	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 
 	Download   Upload `db:"upload_id"`
-	DownloadId int    `gorm:"column:download_id"`
+	DownloadId int    `gorm:"column:download_id" json:"download_id"`
 }
 
 func (DownloadBlock) TableName() string {

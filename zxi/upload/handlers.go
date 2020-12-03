@@ -5,8 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"os"
 	"strconv"
-	"strings"
-	. "zxi_go/core"
+	"zxi_go/core/database"
 	"zxi_go/zxi/models"
 )
 
@@ -16,7 +15,7 @@ type Handler struct {
 
 func NewHandler() *Handler {
 	return &Handler{
-		localDB: MySqlInit(),
+		localDB: database.MySqlInit(),
 	}
 }
 
@@ -60,8 +59,8 @@ func (h *Handler) CreateOrIgnoreUpload(hash string, path string, userId int) int
 		Hash:     hash,
 	}).First(&fileMate)
 	h.localDB.Where(&models.Upload{
-		Recycled: "N",
-		FileId:   fileMate.Id,
+		Recycled:   "N",
+		FileId:     fileMate.Id,
 		UserInfoId: userId,
 	}).First(&uploadMate)
 	if uploadMate.Id == 0 {
@@ -77,7 +76,7 @@ func (h *Handler) CreateOrIgnoreUpload(hash string, path string, userId int) int
 			uploadMate.IsComplete = 0
 		}
 		h.localDB.Create(&uploadMate)
-	} else if uploadMate.Recycled == "Y"{
+	} else if uploadMate.Recycled == "Y" {
 		uploadMate.Recycled = "N"
 		uploadMate.LocalPath = path
 		uploadMate.BlockSize = BLOCK_SIZE
@@ -104,10 +103,45 @@ func (h *Handler) CreateOrIgnorePath(path string) error {
 	return err
 }
 
-func (h *Handler) GetUploadList(userId int, page int, size int) ([]ShowUploadTable, int) {
+func (h *Handler) GetProgress(uploadId int) float64 {
+	var progress float64
+	var totalNum, completeNum int
+	var blockList []models.UploadBlock
+
+	h.localDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		UploadId: uploadId,
+	}).Find(&blockList)
+	for _, blockMate := range blockList {
+		if blockMate.IsComplete == 1 {
+			completeNum++
+		}
+		totalNum++
+	}
+	if totalNum != 0 {
+		progress, _ = strconv.ParseFloat(
+			fmt.Sprintf("%.2f", float64(completeNum)/float64(totalNum)*100),
+			64,
+		)
+	} else {
+		progress = 0
+	}
+	if progress == 100 {
+		fileMate := h.GetFileInfoByUploadId(uploadId)
+		uploadMate := h.GetUploadInfo(uploadId).Upload
+		fileMate.IsComplete = 1
+		uploadMate.IsComplete = 1
+		uploadMate.Uploading = 0
+		h.localDB.Save(fileMate)
+		h.localDB.Save(uploadMate)
+	}
+	return progress
+}
+
+func (h *Handler) GetUploadTable(userId int, page int, size int) ([]ShowUploadTable, int) {
+	var result []ShowUploadTable
 	var count int
 	var uploadList []models.Upload
-	var result []ShowUploadTable
 	start := (page - 1) * size
 	h.localDB.Where(&models.Upload{
 		Recycled:   "N",
@@ -152,39 +186,11 @@ func (h *Handler) GetUploadList(userId int, page int, size int) ([]ShowUploadTab
 			Uploading:  uploadInfo.Uploading,
 			IsComplete: uploadInfo.IsComplete,
 			LocalPath:  uploadInfo.LocalPath,
-			Name:       GetFileByPath(uploadInfo.LocalPath),
-			SizeFmt:       StrSize(fileMate.Size),
 			Size:       fileMate.Size,
 			Progress:   progress,
 		})
 	}
 	return result, count
-}
-
-func (h *Handler) GetProgress(uploadId int) float64 {
-	var progress float64
-	var totalNum, completeNum int
-	var blockList []models.UploadBlock
-
-	h.localDB.Where(&models.UploadBlock{
-		Recycled: "N",
-		UploadId: uploadId,
-	}).Find(&blockList)
-	for _, blockMate := range blockList {
-		if blockMate.IsComplete == 1 {
-			completeNum++
-		}
-		totalNum++
-	}
-	if totalNum != 0 {
-		progress, _ = strconv.ParseFloat(
-			fmt.Sprintf("%.2f", float64(completeNum)/float64(totalNum)*100),
-			64,
-		)
-	} else {
-		progress = 0
-	}
-	return progress
 }
 
 func (h *Handler) GetUploadInfo(uploadId int) ShowUploadInfo {
@@ -199,15 +205,18 @@ func (h *Handler) GetUploadInfo(uploadId int) ShowUploadInfo {
 		UploadId: uploadId,
 	}).Find(&uploadBlockList)
 	return ShowUploadInfo{
-		Id:         uploadMate.Id,
-		LocalPath:  uploadMate.LocalPath,
-		BlockSize:  uploadMate.BlockSize,
-		Uploading:  uploadMate.Uploading,
-		IsComplete: uploadMate.IsComplete,
-		FileId:     uploadMate.FileId,
-		UserInfoId: uploadMate.UserInfoId,
-		BlockList:  uploadBlockList,
+		Upload:    uploadMate,
+		BlockList: uploadBlockList,
 	}
+}
+
+func (h *Handler) GetBlockListByUploadId(uploadId int) []models.UploadBlock {
+	var uploadBlockList []models.UploadBlock
+	h.localDB.Where(&models.UploadBlock{
+		Recycled: "N",
+		UploadId: uploadId,
+	}).Find(&uploadBlockList)
+	return uploadBlockList
 }
 
 func (h *Handler) GetFileInfoByUploadId(uploadId int) models.File {
@@ -290,37 +299,4 @@ func (h *Handler) SaveFile(data []byte, path string) error {
 		_, err = fo.Write(data)
 	}
 	return err
-}
-
-
-
-func GetFileByPath(path string) string {
-	path = strings.Replace(path, `\`, `/`, -1)
-	if path == "" {
-		return "."
-	}
-	for len(path) > 0 && path[len(path)-1] == '/' {
-		path = path[0 : len(path)-1]
-	}
-	if i := strings.LastIndex(path, "/"); i >= 0 {
-		path = path[i+1:]
-	}
-	if path == "" {
-		return "/"
-	}
-	return path
-}
-
-func StrSize(size int) string {
-	floatSize := float64(size)
-	unitList := [5]string{"B", "KB", "MB", "GB", "TB"}
-	index := 0
-	for floatSize > 1024 {
-		index++
-		floatSize, _ = strconv.ParseFloat(
-			fmt.Sprintf("%.2f", floatSize/float64(1024)),
-			64,
-		)
-	}
-	return fmt.Sprintf("%.2f%s", floatSize, unitList[index])
 }

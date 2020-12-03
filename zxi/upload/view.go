@@ -6,19 +6,22 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"zxi_go/core"
+	"zxi_go/core/errHandlers"
+	"zxi_go/core/logger"
 	"zxi_go/zxi/models"
 )
 
 type View struct {
-	logging *logrus.Logger
-	handler *Handler
+	logger   *logrus.Logger
+	handler  *Handler
+	errCheck func(*gin.Context, error, int)
 }
 
 func NewView() *View {
 	return &View{
-		logging: core.LogInit(),
-		handler: NewHandler(),
+		logger:   logger.LogInit(),
+		handler:  NewHandler(),
+		errCheck: errHandlers.CustomError,
 	}
 }
 
@@ -29,9 +32,9 @@ func (v *View) ShowUploads(c *gin.Context) {
 	sizeStr := c.Query("size")
 	page, err := strconv.Atoi(pageStr)
 	size, err := strconv.Atoi(sizeStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
-	uploadList, count := v.handler.GetUploadList(userMate.Id, page, size)
+	uploadList, count := v.handler.GetUploadTable(userMate.Id, page, size)
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"upload_list": uploadList,
@@ -42,7 +45,7 @@ func (v *View) ShowUploads(c *gin.Context) {
 func (v *View) ShowUploadInfo(c *gin.Context) {
 	uploadIdStr := c.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
@@ -53,7 +56,7 @@ func (v *View) ShowUploadInfo(c *gin.Context) {
 func (v *View) ShowProgress(c *gin.Context) {
 	uploadIdStr := c.Query("id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
@@ -65,12 +68,12 @@ func (v *View) UploadFile(c *gin.Context) {
 	uploadIdStr := c.PostForm("upload_id")
 	fileStr := c.PostForm("file")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	fileMate := v.handler.GetFileInfoByUploadId(uploadId)
 	savePath := path.Join("files", fileMate.Hash)
 	err = v.handler.SaveFile([]byte(fileStr), savePath)
-	core.CustomError(c, err, core.ErrSaveFile)
+	v.errCheck(c, err, errHandlers.ErrSaveFile)
 	v.handler.UpdateFileComplete(uploadId, 1)
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
@@ -82,52 +85,52 @@ func (v *View) UploadBlock(c *gin.Context) {
 	blockStr := c.PostForm("block")
 	uploadId, err := strconv.Atoi(uploadIdStr)
 	blockId, err := strconv.Atoi(blockIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	fileMate := v.handler.GetFileInfoByUploadId(uploadId)
 	uploadBlockMate := v.handler.GetUploadBlockInfo(blockId)
 	err = v.handler.CreateOrIgnorePath(path.Join("blocks", fileMate.Hash))
-	core.CustomError(c, err, core.ErrCreatePath)
+	v.errCheck(c, err, errHandlers.ErrCreatePath)
 	savePath := path.Join(
 		"blocks", fileMate.Hash, strconv.Itoa(uploadBlockMate.Offset))
 	err = v.handler.SaveFile([]byte(blockStr), savePath)
-	core.CustomError(c, err, core.ErrSaveFile)
+	v.errCheck(c, err, errHandlers.ErrSaveFile)
 	v.handler.UpdateBlockComplete(blockId, 1)
 
 	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
-func (v *View) PauseUpload(c *gin.Context)  {
+func (v *View) PauseUpload(c *gin.Context) {
 	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 	v.handler.UpdateUploading(uploadId, 0)
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":   true,
 		"upload_id": uploadId,
 	})
 }
 
-func (v *View) StartUpload(c *gin.Context)  {
+func (v *View) StartUpload(c *gin.Context) {
 	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	v.handler.UpdateUploading(uploadId, 1)
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":   true,
 		"upload_id": uploadId,
 	})
 }
 
-func (v *View) CancelUpload(c *gin.Context)  {
+func (v *View) CancelUpload(c *gin.Context) {
 	uploadIdStr := c.PostForm("upload_id")
 	uploadId, err := strconv.Atoi(uploadIdStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	v.handler.DeleteUpload(uploadId)
 	c.JSON(http.StatusOK, gin.H{
-		"success": true,
+		"success":   true,
 		"upload_id": uploadId,
 	})
 }

@@ -5,22 +5,25 @@ import (
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
-	"zxi_go/core"
+	"zxi_go/core/errHandlers"
+	"zxi_go/core/logger"
 	"zxi_go/zxi/models"
 	"zxi_go/zxi/upload"
 )
 
 type View struct {
-	logging *logrus.Logger
-	handler *Handler
+	logger         *logrus.Logger
+	handler        *Handler
 	uploadHandlers *upload.Handler
+	errCheck       func(*gin.Context, error, int)
 }
 
 func NewView() *View {
 	return &View{
-		logging: core.LogInit(),
-		handler: NewHandler(),
+		logger:         logger.LogInit(),
+		handler:        NewHandler(),
 		uploadHandlers: upload.NewHandler(),
+		errCheck:       errHandlers.CustomError,
 	}
 }
 
@@ -45,10 +48,10 @@ func (v *View) SaveFileInfo(c *gin.Context) {
 	userInter, _ := c.Get("userInfo")
 	userMate := userInter.(models.UserInfo)
 	size, err := strconv.Atoi(sizeStr)
-	core.CustomError(c, err, core.ErrBadReq)
+	v.errCheck(c, err, errHandlers.ErrBadReq)
 
 	var dirPath string
-	if root != ""{
+	if root != "" {
 		fileRelativePath := v.handler.AbsolutePathToRelativePath(path, root)
 		dirPath, _ = v.handler.PathSplit(fileRelativePath)
 		v.handler.CreatePath(dirPath, userMate.Id)

@@ -1,4 +1,4 @@
-package core
+package config
 
 var MySqlConf = map[string]string{
 	"user":     "root",

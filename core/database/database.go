@@ -1,22 +1,21 @@
-package core
+package database
 
 import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	"os"
+	"zxi_go/core/config"
 )
 
-
 func MySqlInit() *gorm.DB {
-	var err error
 	dsn := fmt.Sprintf("%s:%s@%s(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
-		MySqlConf["user"],
-		MySqlConf["pwd"],
-		MySqlConf["type"],
-		MySqlConf["address"],
-		MySqlConf["port"],
-		MySqlConf["database"],
+		config.MySqlConf["user"],
+		config.MySqlConf["pwd"],
+		config.MySqlConf["type"],
+		config.MySqlConf["address"],
+		config.MySqlConf["port"],
+		config.MySqlConf["database"],
 	)
 	LocalDB, err := gorm.Open("mysql", dsn)
 	if err != nil {
