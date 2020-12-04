@@ -106,13 +106,14 @@ func (UploadBlock) TableName() string {
 }
 
 type Download struct {
-	Id         int       `gorm:"primary_key" json:"id"`
-	LocalPath  string    `gorm:"type:varchar(255);not null" json:"local_path"`
-	BlockSize  int       `gorm:"type:int(255);not null" json:"block_size"`
-	IsComplete int       `gorm:"type:int(255);not null" json:"is_complete"`
-	Recycled   string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
-	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
-	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
+	Id          int       `gorm:"primary_key" json:"id"`
+	LocalPath   string    `gorm:"type:varchar(255);not null" json:"local_path"`
+	BlockSize   int       `gorm:"type:int(255);not null" json:"block_size"`
+	Downloading int       `gorm:"type:int(255);not null" json:"downloading"`
+	IsComplete  int       `gorm:"type:int(255);not null" json:"is_complete"`
+	Recycled    string    `gorm:"type:varchar(255);not null;default:'N'" json:"recycled"`
+	UpdatedAt   time.Time `gorm:"column:utime" json:"utime"`
+	CreatedAt   time.Time `gorm:"column:ctime" json:"ctime"`
 
 	File       File     `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`

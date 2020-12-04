@@ -12,14 +12,14 @@ const (
 )
 
 var statusText = map[int]string{
-	ErrBadReq     : "请求数据不规范",
-	ErrDBConn     : "数据库连接出错",
-	ErrDBUpdate   : "数据库更新数据出错",
-	ErrDBDelete   : "数据库删除数据出错",
-	ErrDBCreate   : "数据库创建数据出错",
-	ErrDBSelect   : "数据库查询数据出错",
-	ErrSaveFile   : "保存文件到本地磁盘失败",
-	ErrCreatePath : "创建本地路径失败",
+	ErrBadReq:     "请求数据不规范",
+	ErrDBConn:     "数据库连接出错",
+	ErrDBUpdate:   "数据库更新数据出错",
+	ErrDBDelete:   "数据库删除数据出错",
+	ErrDBCreate:   "数据库创建数据出错",
+	ErrDBSelect:   "数据库查询数据出错",
+	ErrSaveFile:   "保存文件到本地磁盘失败",
+	ErrCreatePath: "创建本地路径失败",
 }
 
 func StatusText(code int) string {

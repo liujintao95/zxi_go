@@ -26,14 +26,14 @@ func (h *Handler) CreateOrIgnoreUploadBlock(uploadId int, size int) {
 		Id:       uploadId,
 	}).First(&uploadMate)
 	if uploadMate.IsComplete == 0 {
-		blockNum := (size / BLOCK_SIZE) + 1
+		blockNum := (size / BlockSize) + 1
 		for i := 0; i < blockNum; i++ {
 			var blockSize int
 			var uploadBlockMate models.UploadBlock
 			if i+1 == blockNum {
-				blockSize = size % BLOCK_SIZE
+				blockSize = size % BlockSize
 			} else {
-				blockSize = BLOCK_SIZE
+				blockSize = BlockSize
 			}
 			h.localDB.Where(&models.UploadBlock{
 				Recycled: "N",
@@ -66,7 +66,7 @@ func (h *Handler) CreateOrIgnoreUpload(hash string, path string, userId int) int
 	if uploadMate.Id == 0 {
 		uploadMate.FileId = fileMate.Id
 		uploadMate.UserInfoId = userId
-		uploadMate.BlockSize = BLOCK_SIZE
+		uploadMate.BlockSize = BlockSize
 		uploadMate.LocalPath = path
 		if fileMate.IsComplete == 1 {
 			uploadMate.Uploading = 0
@@ -79,7 +79,7 @@ func (h *Handler) CreateOrIgnoreUpload(hash string, path string, userId int) int
 	} else if uploadMate.Recycled == "Y" {
 		uploadMate.Recycled = "N"
 		uploadMate.LocalPath = path
-		uploadMate.BlockSize = BLOCK_SIZE
+		uploadMate.BlockSize = BlockSize
 		if fileMate.IsComplete == 1 {
 			uploadMate.Uploading = 0
 			uploadMate.IsComplete = 1
