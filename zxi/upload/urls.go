@@ -12,6 +12,7 @@ func UrlMap(router *gin.Engine) {
 	authorized.GET("/upload/show", view.ShowUploads)
 	authorized.GET("/upload/info", view.ShowUploadInfo)
 	authorized.GET("/upload/progress", view.ShowProgress)
+	authorized.POST("/upload/create", view.CreateUpload)
 	authorized.POST("/upload/buffer", view.UploadBuffer)
 	authorized.POST("/upload/pause", view.PauseUpload)
 	authorized.POST("/upload/start", view.StartUpload)

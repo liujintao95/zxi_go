@@ -19,6 +19,67 @@ func NewHandler() *Handler {
 	}
 }
 
+func (h *Handler) CreateOrIgnoreDownloadBlock(downloadId int) {
+	var downloadMate models.Download
+	h.localDB.Where(&models.Download{
+		Recycled: "N",
+		Id:       downloadId,
+	}).First(&downloadMate)
+	h.localDB.Model(&downloadMate).Related(&downloadMate.File)
+
+	if downloadMate.IsComplete == 0 {
+		blockNum := (downloadMate.File.Size / downloadMate.BlockSize) + 1
+		for i := 0; i < blockNum; i++ {
+			var blockSize int
+			var downloadBlockMate models.DownloadBlock
+			if i+1 == blockNum {
+				blockSize = downloadMate.File.Size % downloadMate.BlockSize
+			} else {
+				blockSize = downloadMate.BlockSize
+			}
+			h.localDB.Where(&models.DownloadBlock{
+				Recycled: "N",
+				DownloadId: downloadId,
+				Offset:   i,
+				Size:     blockSize,
+			}).First(&downloadBlockMate)
+			if downloadBlockMate.Id == 0 {
+				downloadBlockMate.DownloadId = downloadId
+				downloadBlockMate.Offset = i
+				downloadBlockMate.Size = blockSize
+				h.localDB.Create(&downloadBlockMate)
+			}
+		}
+	}
+}
+
+func (h *Handler) CreateOrIgnoreDownload(fileId int, userId int, localPath string) int {
+	var downloadMate models.Download
+	h.localDB.Where(&models.Download{
+		Recycled:   "N",
+		FileId:       fileId,
+		UserInfoId:       userId,
+	}).First(&downloadMate)
+	if downloadMate.Id == 0 {
+		var uploadMate models.Upload
+		h.localDB.Where(&models.Upload{
+			Recycled:   "N",
+			FileId:       fileId,
+			UserInfoId:       userId,
+		}).First(&uploadMate)
+
+		downloadMate.FileId = fileId
+		downloadMate.UserInfoId = userId
+		downloadMate.LocalPath = localPath
+		downloadMate.BlockSize = uploadMate.BlockSize
+		downloadMate.Downloading = 1
+		downloadMate.IsComplete = 0
+		h.localDB.Create(&downloadMate)
+
+	}
+	return downloadMate.Id
+}
+
 func (h *Handler) GetDownloadTable(userId int, page int, size int) ([]ShowDownloadTable, int) {
 	var result []ShowDownloadTable
 	var count int
@@ -34,10 +95,14 @@ func (h *Handler) GetDownloadTable(userId int, page int, size int) ([]ShowDownlo
 	}).Count(&count)
 	for _, downloadInfo := range downloadList {
 		var progress float64
-		var fileMate models.File
-		h.localDB.Where(&models.File{
-			Id: downloadInfo.FileId,
-		}).First(&fileMate)
+		var userFileMate models.UserFile
+
+		h.localDB.Where(&models.UserFile{
+			UserInfoId: userId,
+			FileId: downloadInfo.FileId,
+		}).First(&userFileMate)
+		h.localDB.Model(&userFileMate).Related(&userFileMate.File)
+
 		if downloadInfo.IsComplete == 1 {
 			progress = 100
 		} else {
@@ -66,29 +131,23 @@ func (h *Handler) GetDownloadTable(userId int, page int, size int) ([]ShowDownlo
 			Id:          downloadInfo.Id,
 			Downloading: downloadInfo.Downloading,
 			IsComplete:  downloadInfo.IsComplete,
+			Name: userFileMate.Name,
 			LocalPath:   downloadInfo.LocalPath,
-			Size:        fileMate.Size,
+			Size:        userFileMate.File.Size,
 			Progress:    progress,
 		})
 	}
 	return result, count
 }
 
-func (h *Handler) GetDownloadInfo(downloadId int) ShowDownloadInfo {
+func (h *Handler) GetDownloadInfo(downloadId int) models.Download {
     var downloadMate models.Download
-    var downloadBlockList []models.DownloadBlock
     h.localDB.Where(&models.Download{
         Recycled: "N",
         Id:       downloadId,
     }).First(&downloadMate)
-    h.localDB.Where(&models.DownloadBlock{
-        Recycled: "N",
-        DownloadId: downloadId,
-    }).Find(&downloadBlockList)
-    return ShowDownloadInfo{
-        Download:    downloadMate,
-        BlockList: downloadBlockList,
-    }
+    h.localDB.Model(&downloadMate).Related(&downloadMate.Block)
+    return downloadMate
 }
 
 func (h *Handler) GetProgress(downloadId int) float64 {
@@ -124,10 +183,7 @@ func (h *Handler) GetFileInfoByDownloadId(downloadId int) models.File {
 		Recycled: "N",
 		Id:       downloadId,
 	}).First(&downloadMate)
-	h.localDB.Where(&models.File{
-		Recycled: "N",
-		Id:       downloadMate.FileId,
-	}).First(&fileMate)
+	h.localDB.Model(&downloadMate).First(&fileMate)
 	return fileMate
 }
 

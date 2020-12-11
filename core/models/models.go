@@ -78,6 +78,7 @@ type Upload struct {
 	UpdatedAt  time.Time `gorm:"column:utime" json:"utime"`
 	CreatedAt  time.Time `gorm:"column:ctime" json:"ctime"`
 
+	Block []UploadBlock `json:"block_list"`
 	File       File     `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
 	FileId     int      `gorm:"column:file_id" json:"file_id"`
@@ -115,6 +116,7 @@ type Download struct {
 	UpdatedAt   time.Time `gorm:"column:utime" json:"utime"`
 	CreatedAt   time.Time `gorm:"column:ctime" json:"ctime"`
 
+	Block []DownloadBlock  `json:"block_list"`
 	File       File     `gorm:"ForeignKey:FileId;AssociationForeignKey:Id"`
 	UserInfo   UserInfo `gorm:"ForeignKey:UserInfoId;AssociationForeignKey:Id"`
 	FileId     int      `gorm:"column:file_id" json:"file_id"`

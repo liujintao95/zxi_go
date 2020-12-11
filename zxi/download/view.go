@@ -26,6 +26,20 @@ func NewView() *View {
 	}
 }
 
+func (v *View) CreateDownload(c *gin.Context){
+	downloadPath := c.PostForm("download_path")
+	fileIdStr := c.PostForm("file_id")
+	userInter, _ := c.Get("userInfo")
+	userMate := userInter.(models.UserInfo)
+	fileId, err := strconv.Atoi(fileIdStr)
+	v.errCheck(c, err, errState.ErrBadReq)
+
+	lastId := v.handler.CreateOrIgnoreDownload(fileId, userMate.Id, downloadPath)
+	v.handler.CreateOrIgnoreDownloadBlock(lastId)
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 func (v *View) ShowDownload(c *gin.Context) {
 	pageStr := c.Query("page")
 	sizeStr := c.Query("size")

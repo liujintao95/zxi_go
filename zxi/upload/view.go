@@ -26,6 +26,31 @@ func NewView() *View {
 	}
 }
 
+func (v *View) CreateUpload(c *gin.Context) {
+	sizeStr := c.PostForm("size")
+	hash := c.PostForm("hash")
+	name := c.PostForm("name")
+	filePath := c.PostForm("path")
+	root := c.PostForm("root")
+	userInter, _ := c.Get("userInfo")
+	userMate := userInter.(models.UserInfo)
+	size, err := strconv.Atoi(sizeStr)
+	v.errCheck(c, err, errState.ErrBadReq)
+
+	var dirPath string
+	if root != "" {
+		fileRelativePath := v.handler.AbsolutePathToRelativePath(filePath, root)
+		dirPath, _ = v.handler.PathSplit(fileRelativePath)
+		v.handler.CreateZXiPath(dirPath, userMate.Id)
+	}
+	v.handler.CreateOrIgnoreFile(hash, size)
+	v.handler.CreateUserFile(hash, name, userMate.Id, dirPath)
+	lastId := v.handler.CreateOrIgnoreUpload(hash, filePath, userMate.Id)
+	v.handler.CreateOrIgnoreUploadBlock(lastId, size)
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
+}
+
 func (v *View) ShowUploads(c *gin.Context) {
 	pageStr := c.Query("page")
 	sizeStr := c.Query("size")
@@ -75,7 +100,7 @@ func (v *View) UploadBuffer(c *gin.Context) {
 	v.errCheck(c, err, errState.ErrBadReq)
 
 	fileMate := v.handler.GetFileInfoByUploadId(uploadId)
-	err = v.handler.CreateOrIgnorePath(path.Join(FilePath, fileMate.Hash))
+	err = v.handler.CreateOrIgnoreLocalPath(path.Join(FilePath, fileMate.Hash))
 	v.errCheck(c, err, errState.ErrCreatePath)
 	savePath := path.Join(FilePath, fileMate.Hash, offsetStr)
 	err = v.handler.SaveFile([]byte(bufferStr), savePath)

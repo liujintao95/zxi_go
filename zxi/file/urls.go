@@ -10,5 +10,4 @@ func UrlMap(router *gin.Engine) {
 
 	authorized := router.Group("/zxi/auth", middleware.LoginRequired)
 	authorized.GET("/file/show", view.ShowFiles)
-	authorized.POST("/file/save", view.SaveFileInfo)
 }
