@@ -10,16 +10,16 @@ import (
 )
 
 type View struct {
-	logger         *logrus.Logger
-	handler        *Handler
-	errCheck       func(*gin.Context, error, int)
+	logger   *logrus.Logger
+	handler  *Handler
+	errCheck func(*gin.Context, error, int)
 }
 
 func NewView() *View {
 	return &View{
-		logger:         logger.LogInit(),
-		handler:        NewHandler(),
-		errCheck:       customError.ErrorCheck,
+		logger:   logger.LogInit(),
+		handler:  NewHandler(),
+		errCheck: customError.ErrorCheck,
 	}
 }
 

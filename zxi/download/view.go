@@ -26,7 +26,7 @@ func NewView() *View {
 	}
 }
 
-func (v *View) CreateDownload(c *gin.Context){
+func (v *View) CreateDownload(c *gin.Context) {
 	downloadPath := c.PostForm("download_path")
 	fileIdStr := c.PostForm("file_id")
 	userInter, _ := c.Get("userInfo")
@@ -49,23 +49,23 @@ func (v *View) ShowDownload(c *gin.Context) {
 	size, err := strconv.Atoi(sizeStr)
 	v.errCheck(c, err, errState.ErrBadReq)
 
-    downloadList, count := v.handler.GetDownloadTable(userMate.Id, page, size)
+	downloadList, count := v.handler.GetDownloadTable(userMate.Id, page, size)
 	c.JSON(http.StatusOK, gin.H{
-		"success":     true,
+		"success":       true,
 		"download_list": downloadList,
-		"count":       count,
+		"count":         count,
 	})
 }
 
 func (v *View) ShowDownloadInfo(c *gin.Context) {
-    downloadIdStr := c.Query("download_id")
-    downloadId, err := strconv.Atoi(downloadIdStr)
-    v.errCheck(c, err, errState.ErrBadReq)
+	downloadIdStr := c.Query("download_id")
+	downloadId, err := strconv.Atoi(downloadIdStr)
+	v.errCheck(c, err, errState.ErrBadReq)
 
-    c.JSON(http.StatusOK, gin.H{
-        "success":     true,
-        "upload_info": v.handler.GetDownloadInfo(downloadId),
-    })
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"download_info": v.handler.GetDownloadInfo(downloadId),
+	})
 }
 
 func (v *View) ShowProgress(c *gin.Context) {
@@ -95,7 +95,7 @@ func (v *View) DownloadBuffer(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"buffer": bufferStr,
+		"buffer":  bufferStr,
 	})
 }
 
@@ -105,7 +105,7 @@ func (v *View) PauseDownload(c *gin.Context) {
 	v.errCheck(c, err, errState.ErrBadReq)
 	v.handler.UpdateDownloading(downloadId, 0)
 	c.JSON(http.StatusOK, gin.H{
-		"success":   true,
+		"success":     true,
 		"download_id": downloadId,
 	})
 }
@@ -117,7 +117,7 @@ func (v *View) StartDownload(c *gin.Context) {
 
 	v.handler.UpdateDownloading(downloadId, 1)
 	c.JSON(http.StatusOK, gin.H{
-		"success":   true,
+		"success":     true,
 		"download_id": downloadId,
 	})
 }

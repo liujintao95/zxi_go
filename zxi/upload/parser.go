@@ -8,7 +8,7 @@ type ShowUploadTable struct {
 	Id         int     `json:"id"`
 	Uploading  int     `json:"uploading"`
 	IsComplete int     `json:"is_complete"`
-	Name  string  `json:"name"`
+	Name       string  `json:"name"`
 	LocalPath  string  `json:"local_path"`
 	Size       int     `json:"size"`
 	Progress   float64 `json:"progress"`

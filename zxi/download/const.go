@@ -1,5 +1,5 @@
 package download
 
 const (
-    FilePath = "files"
+	FilePath = "files"
 )

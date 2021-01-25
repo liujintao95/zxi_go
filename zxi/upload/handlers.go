@@ -173,7 +173,7 @@ func (h *Handler) GetProgress(uploadId int) float64 {
 	var totalNum, completeNum int
 	var blockList []models.UploadBlock
 
-	if h.GetUploadInfo(uploadId).IsComplete == 1{
+	if h.GetUploadInfo(uploadId).IsComplete == 1 {
 		return 100
 	}
 
@@ -225,7 +225,7 @@ func (h *Handler) GetUploadTable(userId int, page int, size int) ([]ShowUploadTa
 		var userFileMate models.UserFile
 		h.localDB.Where(&models.UserFile{
 			UserInfoId: userId,
-			FileId: uploadInfo.FileId,
+			FileId:     uploadInfo.FileId,
 		}).First(&userFileMate)
 		h.localDB.Model(&userFileMate).Related(&userFileMate.File)
 		if uploadInfo.IsComplete == 1 {
@@ -256,7 +256,7 @@ func (h *Handler) GetUploadTable(userId int, page int, size int) ([]ShowUploadTa
 			Id:         uploadInfo.Id,
 			Uploading:  uploadInfo.Uploading,
 			IsComplete: uploadInfo.IsComplete,
-			Name: userFileMate.Name,
+			Name:       userFileMate.Name,
 			LocalPath:  uploadInfo.LocalPath,
 			Size:       userFileMate.File.Size,
 			Progress:   progress,
